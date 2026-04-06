@@ -263,9 +263,3 @@ const ROLE_LIST = [
     ] 
   }
 ];
-
-// 游戏规则配置
-const GAME_CONFIG = {
-  MAX_ROUND: 20,
-  ROLES_PER_PLAYER: 3
-};
