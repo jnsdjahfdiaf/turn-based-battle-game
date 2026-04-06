@@ -263,3 +263,8 @@ const ROLE_LIST = [
     ] 
   }
 ];
+
+const GAME_CONFIG = {
+  MAX_ROUND: 20,
+  ROLES_PER_PLAYER: 3
+};
