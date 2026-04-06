@@ -1,38 +1,29 @@
 // ==============================
-// 工具函数
+// DOM元素缓存
 // ==============================
-function renderHp(hp, maxHp) {
-  let html = '';
-  const full = Math.floor(hp);
-  const half = hp % 1 >= 0.5;
-  const empty = Math.floor(maxHp) - full - (half ? 1 : 0);
-  // 修正原来的笔误，full心加对class
-  html += '<div class="heart full"></div>'.repeat(full);
-  if (half) html += '<div class="heart half"></div>';
-  html += '<div class="heart empty"></div>'.repeat(empty);
-  return html;
-}
-function renderEnergy(energy, maxEnergy) {
-  let html = '';
-  for (let i = 0; i < maxEnergy; i++) {
-    html += `<div class="energy ${i < energy ? 'filled' : ''}"></div>`;
-  }
-  return html;
-}
-function renderBuffs(buffs) {
-  if (!buffs.length) return '';
-  return buffs.map(b => `
-    <div class="buff-tag ${b.type}" title="${b.description} (剩余${b.duration}回合)">
-      ${b.name}${b.duration>0?`(${b.duration})`:''}
-    </div>
-  `).join('');
-}
-function isPlayerAllDead(playerId) {
-  return gameState.players[playerId].battleRoles.every(r => r.currentHp <= 0);
-}
-function getPlayerTotalHp(playerId) {
-  return gameState.players[playerId].battleRoles.reduce((sum, r) => sum + r.currentHp, 0);
-}
+const $ = id => document.getElementById(id);
+const $stageTip = $('stage-tip');
+const $roundCounter = $('round-counter');
+const $roleSelectSection = $('role-select-section');
+const $roleList = $('role-list');
+const $player1Selected = $('player1-selected');
+const $player2Selected = $('player2-selected');
+const $confirmRolesBtn = $('confirm-roles');
+const $positionSelectSection = $('position-select-section');
+const $player1Position = $('player1-position');
+const $player2Position = $('player2-position');
+const $confirmPositionsBtn = $('confirm-positions');
+const $battleSection = $('battle-section');
+const $player1Side = $('player1-side');
+const $player2Side = $('player2-side');
+const $currentPlayerTip = $('current-player-tip');
+const $skillList = $('skill-list');
+const $targetSelectTip = $('target-select-tip');
+const $resultModal = $('result-modal');
+const $resultText = $('result-text');
+const $resultDesc = $('result-desc');
+const $restartBtn = $('restart-btn');
+const $switchSelectPlayer = $('switch-select-player');
 
 // ==============================
 // 游戏全局状态
@@ -60,13 +51,39 @@ let gameState = {
 };
 
 // ==============================
-// DOM元素缓存（改为加载完DOM再获取）
+// 工具函数
 // ==============================
-const $ = id => document.getElementById(id);
-let $stageTip, $roundCounter, $roleSelectSection, $roleList, $player1Selected, $player2Selected, 
-    $confirmRolesBtn, $positionSelectSection, $player1Position, $player2Position, $confirmPositionsBtn,
-    $battleSection, $player1Side, $player2Side, $currentPlayerTip, $skillList, $targetSelectTip,
-    $resultModal, $resultText, $resultDesc, $restartBtn, $switchSelectPlayer;
+function renderHp(hp, maxHp) {
+  let html = '';
+  const full = Math.floor(hp);
+  const half = hp % 1 >= 0.5;
+  const empty = Math.floor(maxHp) - full - (half ? 1 : 0);
+  html += '<div class="heart"></div>'.repeat(full);
+  if (half) html += '<div class="heart half"></div>';
+  html += '<div class="heart empty"></div>'.repeat(empty);
+  return html;
+}
+function renderEnergy(energy, maxEnergy) {
+  let html = '';
+  for (let i = 0; i < maxEnergy; i++) {
+    html += `<div class="energy ${i < energy ? 'filled' : ''}"></div>`;
+  }
+  return html;
+}
+function renderBuffs(buffs) {
+  if (!buffs.length) return '';
+  return buffs.map(b => `
+    <div class="buff-tag ${b.type}" title="${b.description} (剩余${b.duration}回合)">
+      ${b.name}${b.duration>0?`(${b.duration})`:''}
+    </div>
+  `).join('');
+}
+function isPlayerAllDead(playerId) {
+  return gameState.players[playerId].battleRoles.every(r => r.currentHp <= 0);
+}
+function getPlayerTotalHp(playerId) {
+  return gameState.players[playerId].battleRoles.reduce((sum, r) => sum + r.currentHp, 0);
+}
 
 // ==============================
 // 选角阶段逻辑
@@ -93,7 +110,12 @@ function initRoleSelect() {
   updateSelectedRolesTip();
   updateRoleCardStatus();
 }
-
+$switchSelectPlayer.addEventListener('click', () => {
+  gameState.currentOperatePlayer = gameState.currentOperatePlayer === 1 ? 2 : 1;
+  $switchSelectPlayer.textContent = `当前配置：玩家${gameState.currentOperatePlayer}`;
+  updateRoleCardStatus();
+  $stageTip.textContent = `请玩家${gameState.currentOperatePlayer}选择参战角色`;
+});
 function handleRoleSelect(roleId) {
   const curPlayer = gameState.currentOperatePlayer;
   const selected = gameState.players[curPlayer].selectedRoles;
@@ -151,13 +173,6 @@ $confirmRolesBtn.addEventListener('click', () => {
   gameState.currentOperatePlayer = 1;
   $stageTip.textContent = '请玩家1安排角色站位';
   initPositionSelect();
-});
-
-$switchSelectPlayer.addEventListener('click', () => {
-  gameState.currentOperatePlayer = gameState.currentOperatePlayer === 1 ? 2 : 1;
-  $switchSelectPlayer.textContent = `当前配置：玩家${gameState.currentOperatePlayer}`;
-  updateRoleCardStatus();
-  $stageTip.textContent = `请玩家${gameState.currentOperatePlayer}选择参战角色`;
 });
 
 // ==============================
@@ -355,7 +370,7 @@ function handleTargetSelect(target, targetPlayerId) {
   const caster = gameState.selectedRole;
   let targets = [];
 
-  // 整理目标列表（处理群体/混乱）
+  // 整理目标列表（和原逻辑一致，处理群体/混乱）
   if (skill.targetType === 'allEnemy') {
     targets = gameState.players[targetPlayerId === 1 ? 2 : 1].battleRoles.filter(r => r.currentHp>0);
   } else if (skill.targetType === 'allAlly') {
@@ -534,7 +549,7 @@ function processRoundEnd() {
       });
       // 减少持续时间，移除过期Buff
       role.buffs.forEach(buff => buff.duration--);
-      role.buffs = role.buffs.filter(buff => buff.duration > 0);
+      role.buffs = role.buffs.filter(buff => b.duration > 0);
       // 重置每回合属性乘数
       role.damageTakenMultiplier = 1;
       role.damageDealtMultiplier = 1;
@@ -634,37 +649,8 @@ $restartBtn.addEventListener('click', () => {
   initRoleSelect();
 });
 
-// ==============================
-// 初始化：等待DOM加载完成再执行
-// ==============================
-document.addEventListener('DOMContentLoaded', () => {
-  //  DOM加载完成后再获取所有元素，解决null报错问题
-  $stageTip = $('stage-tip');
-  $roundCounter = $('round-counter');
-  $roleSelectSection = $('role-select-section');
-  $roleList = $('role-list');
-  $player1Selected = $('player1-selected');
-  $player2Selected = $('player2-selected');
-  $confirmRolesBtn = $('confirm-roles');
-  $positionSelectSection = $('position-select-section');
-  $player1Position = $('player1-position');
-  $player2Position = $('player2-position');
-  $confirmPositionsBtn = $('confirm-positions');
-  $battleSection = $('battle-section');
-  $player1Side = $('player1-side');
-  $player2Side = $('player2-side');
-  $currentPlayerTip = $('current-player-tip');
-  $skillList = $('skill-list');
-  $targetSelectTip = $('target-select-tip');
-  $resultModal = $('result-modal');
-  $resultText = $('result-text');
-  $resultDesc = $('result-desc');
-  $restartBtn = $('restart-btn');
-  $switchSelectPlayer = $('switch-select-player');
-
-  // 初始化游戏
-  initRoleSelect();
-});
+// 初始化游戏
+initRoleSelect();
 
 // 初始化游戏
 initRoleSelect();
