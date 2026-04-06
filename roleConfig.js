@@ -16,13 +16,16 @@ import { BUFF_LIST } from './buffConfig.js';
 //   hitRate: 命中率，0-1之间，1为必中
 //   effect: 技能效果函数，返回伤害和Buff结果
 // ==============================
+import { BUFF_LIST } from './buffConfig.js';
+// ==============================
+// 角色配置，已经全改为100%命中，符合要求
+// ==============================
 export const ROLE_LIST = [
-  // ===== 原有3个经典角色 =====
   {
     id: 'warrior',
     name: '烈焰战士',
     avatar: 'https://picsum.photos/seed/warrior/100/100',
-    maxHp: 6, // 6颗心
+    maxHp: 6,
     skills: [
       {
         name: '重斩',
@@ -30,8 +33,8 @@ export const ROLE_LIST = [
         description: '对敌方造成1-2心伤害',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.9,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const damage = 1 + Math.random();
           return { damage, buff: null };
         }
@@ -42,8 +45,8 @@ export const ROLE_LIST = [
         description: '对敌方造成2-3心伤害，30%概率附加2回合灼伤',
         cooldown: 2,
         targetType: 'enemy',
-        hitRate: 0.8,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const damage = 2 + Math.random();
           const buff = Math.random() < 0.3 ? { ...BUFF_LIST.BURN, duration: 2 } : null;
           return { damage, buff };
@@ -52,11 +55,11 @@ export const ROLE_LIST = [
       {
         name: '烈焰风暴',
         type: 'damage',
-        description: '对全体敌方造成2.5心伤害，必中',
+        description: '对全体敌方造成2.5心伤害',
         cooldown: 5,
         targetType: 'allEnemy',
         hitRate: 1,
-        effect: (target) => ({ damage: 2.5, buff: null })
+        effect: (target, caster) => ({ damage: 2.5, buff: null })
       }
     ]
   },
@@ -72,8 +75,8 @@ export const ROLE_LIST = [
         description: '对敌方造成0.5-1.5心伤害，20%概率附加1回合减速',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.95,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const damage = 0.5 + Math.random();
           const buff = Math.random() < 0.2 ? { ...BUFF_LIST.SLOW, duration: 1 } : null;
           return { damage, buff };
@@ -86,7 +89,7 @@ export const ROLE_LIST = [
         cooldown: 3,
         targetType: 'ally',
         hitRate: 1,
-        effect: (target) => ({
+        effect: (target, caster) => ({
           damage: 0,
           buff: { ...BUFF_LIST.SHIELD, duration: 2, extraData: 2 }
         })
@@ -98,7 +101,7 @@ export const ROLE_LIST = [
         cooldown: 4,
         targetType: 'allEnemy',
         hitRate: 1,
-        effect: (target) => {
+        effect: (target, caster) => {
           const buff = Math.random() < 0.5 ? { ...BUFF_LIST.FROST, duration: 2 } : null;
           return { damage: 2, buff };
         }
@@ -117,8 +120,8 @@ export const ROLE_LIST = [
         description: '对敌方造成0.5-1心伤害',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.9,
-        effect: (target) => ({ damage: 0.5 + Math.random() * 0.5, buff: null })
+        hitRate: 1,
+        effect: (target, caster) => ({ damage: 0.5 + Math.random() * 0.5, buff: null })
       },
       {
         name: '治愈术',
@@ -127,7 +130,7 @@ export const ROLE_LIST = [
         cooldown: 2,
         targetType: 'ally',
         hitRate: 1,
-        effect: (target) => ({ damage: -(1 + Math.random() * 2), buff: null })
+        effect: (target, caster) => ({ damage: -(1 + Math.random() * 2), buff: null })
       },
       {
         name: '神圣净化',
@@ -136,20 +139,18 @@ export const ROLE_LIST = [
         cooldown: 4,
         targetType: 'allAlly',
         hitRate: 1,
-        effect: (target) => ({
+        effect: (target, caster) => ({
           damage: 0,
           buff: [BUFF_LIST.PURIFY, { ...BUFF_LIST.DOUBLE_DAMAGE, duration: 1 }]
         })
       }
     ]
   },
-  // ===== 新增10个全新角色 =====
-  // 1. 暗影刺客（高爆发低血量）
   {
     id: 'assassin',
     name: '暗影刺客',
     avatar: 'https://picsum.photos/seed/assassin/100/100',
-    maxHp: 4, // 4颗心，低血量高伤害
+    maxHp: 4,
     skills: [
       {
         name: '背刺',
@@ -157,8 +158,8 @@ export const ROLE_LIST = [
         description: '对敌方造成1-2心伤害，20%概率眩晕1回合',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.9,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const damage = 1 + Math.random();
           const buff = Math.random() < 0.2 ? { ...BUFF_LIST.STUN, duration: 1 } : null;
           return { damage, buff };
@@ -170,8 +171,8 @@ export const ROLE_LIST = [
         description: '对敌方造成2-3心伤害，50%概率减速2回合',
         cooldown: 2,
         targetType: 'enemy',
-        hitRate: 0.85,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const damage = 2 + Math.random();
           const buff = Math.random() < 0.5 ? { ...BUFF_LIST.SLOW, duration: 2 } : null;
           return { damage, buff };
@@ -180,23 +181,22 @@ export const ROLE_LIST = [
       {
         name: '斩杀',
         type: 'damage',
-        description: '对血量低于30%的敌方造成4心伤害，必中',
+        description: '对血量低于30%的敌方造成4心伤害',
         cooldown: 4,
         targetType: 'enemy',
         hitRate: 1,
-        effect: (target) => {
+        effect: (target, caster) => {
           const damage = target.currentHp / target.maxHp < 0.3 ? 4 : 2;
           return { damage, buff: null };
         }
       }
     ]
   },
-  // 2. 重装坦克（高血量防御型）
   {
     id: 'tank',
     name: '重装坦克',
     avatar: 'https://picsum.photos/seed/tank/100/100',
-    maxHp: 7.5, // 7颗半心，最肉
+    maxHp: 7.5,
     skills: [
       {
         name: '盾击',
@@ -204,8 +204,8 @@ export const ROLE_LIST = [
         description: '对敌方造成0.5-1心伤害，30%概率眩晕1回合',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.85,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const damage = 0.5 + Math.random() * 0.5;
           const buff = Math.random() < 0.3 ? { ...BUFF_LIST.STUN, duration: 1 } : null;
           return { damage, buff };
@@ -218,7 +218,7 @@ export const ROLE_LIST = [
         cooldown: 3,
         targetType: 'self',
         hitRate: 1,
-        effect: (target) => ({
+        effect: (target, caster) => ({
           damage: 0,
           buff: [
             { ...BUFF_LIST.SHIELD, duration: 2, extraData: 3 },
@@ -233,14 +233,13 @@ export const ROLE_LIST = [
         cooldown: 4,
         targetType: 'allEnemy',
         hitRate: 1,
-        effect: (target) => ({
+        effect: (target, caster) => ({
           damage: 0,
           buff: { ...BUFF_LIST.DAMAGE_REDUCTION, duration: 2 }
         })
       }
     ]
   },
-  // 3. 丛林游侠（远程持续伤害）
   {
     id: 'ranger',
     name: '丛林游侠',
@@ -253,8 +252,8 @@ export const ROLE_LIST = [
         description: '对敌方造成0.5-1.5心伤害，30%概率附加2回合灼伤',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.9,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const damage = 0.5 + Math.random();
           const buff = Math.random() < 0.3 ? { ...BUFF_LIST.BURN, duration: 2 } : null;
           return { damage, buff };
@@ -263,11 +262,11 @@ export const ROLE_LIST = [
       {
         name: '藤蔓缠绕',
         type: 'buff',
-        description: '给敌方附加2回合减速+无法攻击',
+        description: '给敌方附加2回合减速+1回合眩晕',
         cooldown: 2,
         targetType: 'enemy',
-        hitRate: 0.75,
-        effect: (target) => ({
+        hitRate: 1,
+        effect: (target, caster) => ({
           damage: 0,
           buff: [
             { ...BUFF_LIST.SLOW, duration: 2 },
@@ -281,15 +280,14 @@ export const ROLE_LIST = [
         description: '全体敌方造成1.5心伤害，40%概率附加2回合灼伤',
         cooldown: 4,
         targetType: 'allEnemy',
-        hitRate: 0.9,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const buff = Math.random() < 0.4 ? { ...BUFF_LIST.BURN, duration: 2 } : null;
           return { damage: 1.5, buff };
         }
       }
     ]
   },
-  // 4. 神圣圣骑士（半坦半辅助）
   {
     id: 'paladin',
     name: '神圣圣骑士',
@@ -302,8 +300,8 @@ export const ROLE_LIST = [
         description: '对敌方造成1-1.5心伤害',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.9,
-        effect: (target) => ({ damage: 1 + Math.random() * 0.5, buff: null })
+        hitRate: 1,
+        effect: (target, caster) => ({ damage: 1 + Math.random() * 0.5, buff: null })
       },
       {
         name: '圣疗术',
@@ -312,7 +310,7 @@ export const ROLE_LIST = [
         cooldown: 2,
         targetType: 'ally',
         hitRate: 1,
-        effect: (target) => ({
+        effect: (target, caster) => ({
           damage: -(2 + Math.random()),
           buff: BUFF_LIST.PURIFY
         })
@@ -324,7 +322,7 @@ export const ROLE_LIST = [
         cooldown: 4,
         targetType: 'allAlly',
         hitRate: 1,
-        effect: (target) => ({
+        effect: (target, caster) => ({
           damage: 0,
           buff: [
             BUFF_LIST.PURIFY,
@@ -334,7 +332,6 @@ export const ROLE_LIST = [
       }
     ]
   },
-  // 5. 咒术师（Debuff机器）
   {
     id: 'warlock',
     name: '咒术师',
@@ -347,8 +344,8 @@ export const ROLE_LIST = [
         description: '对敌方造成0.5-1心伤害，20%概率附加2回合伤害减半',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.9,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const damage = 0.5 + Math.random() * 0.5;
           const buff = Math.random() < 0.2 ? { ...BUFF_LIST.DAMAGE_REDUCTION, duration: 2 } : null;
           return { damage, buff };
@@ -360,8 +357,8 @@ export const ROLE_LIST = [
         description: '给敌方附加2回合伤害减半+减速',
         cooldown: 2,
         targetType: 'enemy',
-        hitRate: 0.8,
-        effect: (target) => ({
+        hitRate: 1,
+        effect: (target, caster) => ({
           damage: 0,
           buff: [
             { ...BUFF_LIST.DAMAGE_REDUCTION, duration: 2 },
@@ -376,20 +373,16 @@ export const ROLE_LIST = [
         cooldown: 4,
         targetType: 'allEnemy',
         hitRate: 1,
-        effect: (target) => {
-          const buff = Math.random() < 0.5 ? { ...BUFF_LIST.BURN, duration: 2 } : null;
-          return {
-            damage: 0,
-            buff: buff ? [
-              { ...BUFF_LIST.SLOW, duration: 2 },
-              buff
-            ] : [{ ...BUFF_LIST.SLOW, duration: 2 }]
-          };
+        effect: (target, caster) => {
+          const buff = Math.random() < 0.5 ? [
+            { ...BUFF_LIST.SLOW, duration: 2 },
+            { ...BUFF_LIST.BURN, duration: 2 }
+          ] : [{ ...BUFF_LIST.SLOW, duration: 2 }];
+          return { damage: 0, buff };
         }
       }
     ]
   },
-  // 6. 爆破工程师（范围伤害）
   {
     id: 'engineer',
     name: '爆破工程师',
@@ -402,8 +395,8 @@ export const ROLE_LIST = [
         description: '对敌方造成1-2心伤害，30%概率附加2回合灼伤',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.85,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const damage = 1 + Math.random();
           const buff = Math.random() < 0.3 ? { ...BUFF_LIST.BURN, duration: 2 } : null;
           return { damage, buff };
@@ -412,11 +405,11 @@ export const ROLE_LIST = [
       {
         name: '定时炸弹',
         type: 'damage',
-        description: '对敌方造成2-3心伤害，必中',
+        description: '对敌方造成2-3心伤害',
         cooldown: 3,
         targetType: 'enemy',
         hitRate: 1,
-        effect: (target) => ({ damage: 2 + Math.random(), buff: null })
+        effect: (target, caster) => ({ damage: 2 + Math.random(), buff: null })
       },
       {
         name: '自爆',
@@ -426,14 +419,12 @@ export const ROLE_LIST = [
         targetType: 'allEnemy',
         hitRate: 1,
         effect: (target, caster) => {
-          // 自身掉血
           caster.currentHp = Math.max(0, caster.currentHp - 2);
           return { damage: 3, buff: null };
         }
       }
     ]
   },
-  // 7. 死灵术士（吸血+减益）
   {
     id: 'necromancer',
     name: '死灵术士',
@@ -446,7 +437,7 @@ export const ROLE_LIST = [
         description: '对敌方造成0.5-1.5心伤害，50%概率将伤害转化为自身血量',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.9,
+        hitRate: 1,
         effect: (target, caster) => {
           const damage = 0.5 + Math.random();
           if (Math.random() < 0.5) {
@@ -461,8 +452,8 @@ export const ROLE_LIST = [
         description: '给敌方附加2回合伤害减半+减速',
         cooldown: 2,
         targetType: 'enemy',
-        hitRate: 0.8,
-        effect: (target) => ({
+        hitRate: 1,
+        effect: (target, caster) => ({
           damage: 0,
           buff: [
             { ...BUFF_LIST.DAMAGE_REDUCTION, duration: 2 },
@@ -477,7 +468,7 @@ export const ROLE_LIST = [
         cooldown: 4,
         targetType: 'allAlly',
         hitRate: 1,
-        effect: (target) => ({
+        effect: (target, caster) => ({
           damage: 0,
           buff: [
             { ...BUFF_LIST.DOUBLE_DAMAGE, duration: 2 },
@@ -487,7 +478,6 @@ export const ROLE_LIST = [
       }
     ]
   },
-  // 8. 冰雪射手（寒霜控制）
   {
     id: 'ice_archer',
     name: '冰雪射手',
@@ -500,8 +490,8 @@ export const ROLE_LIST = [
         description: '对敌方造成0.5-1.5心伤害，30%概率附加2回合寒霜',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.9,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const damage = 0.5 + Math.random();
           const buff = Math.random() < 0.3 ? { ...BUFF_LIST.FROST, duration: 2 } : null;
           return { damage, buff };
@@ -513,8 +503,8 @@ export const ROLE_LIST = [
         description: '给敌方附加1回合眩晕',
         cooldown: 3,
         targetType: 'enemy',
-        hitRate: 0.75,
-        effect: (target) => ({
+        hitRate: 1,
+        effect: (target, caster) => ({
           damage: 0,
           buff: { ...BUFF_LIST.STUN, duration: 1 }
         })
@@ -525,8 +515,8 @@ export const ROLE_LIST = [
         description: '全体敌方造成1.5心伤害，60%概率附加2回合寒霜+1回合减速',
         cooldown: 4,
         targetType: 'allEnemy',
-        hitRate: 0.9,
-        effect: (target) => {
+        hitRate: 1,
+        effect: (target, caster) => {
           const buff = Math.random() < 0.6 ? [
             { ...BUFF_LIST.FROST, duration: 2 },
             { ...BUFF_LIST.SLOW, duration: 1 }
@@ -536,7 +526,6 @@ export const ROLE_LIST = [
       }
     ]
   },
-  // 9. 狂战士（越低血越猛）
   {
     id: 'berserker',
     name: '狂战士',
@@ -549,7 +538,7 @@ export const ROLE_LIST = [
         description: '对敌方造成1-2.5心伤害，自身损失0.5心',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.9,
+        hitRate: 1,
         effect: (target, caster) => {
           const damage = 1 + Math.random() * 1.5;
           caster.currentHp = Math.max(0, caster.currentHp - 0.5);
@@ -563,7 +552,7 @@ export const ROLE_LIST = [
         cooldown: 2,
         targetType: 'self',
         hitRate: 1,
-        effect: (target) => ({
+        effect: (target, caster) => ({
           damage: 0,
           buff: [
             { ...BUFF_LIST.DOUBLE_DAMAGE, duration: 2 },
@@ -577,17 +566,16 @@ export const ROLE_LIST = [
         description: '对敌方造成3-4心伤害，自身损失1心，血量越低伤害越高',
         cooldown: 4,
         targetType: 'enemy',
-        hitRate: 0.85,
+        hitRate: 1,
         effect: (target, caster) => {
           const hpRate = caster.currentHp / caster.maxHp;
-          const extraDamage = (1 - hpRate) * 2; // 残血最多加2心伤害
+          const extraDamage = (1 - hpRate) * 2;
           caster.currentHp = Math.max(0, caster.currentHp - 1);
           return { damage: 3 + Math.random() + extraDamage, buff: null };
         }
       }
     ]
   },
-  // 10. 吟游诗人（纯辅助）
   {
     id: 'bard',
     name: '吟游诗人',
@@ -600,8 +588,8 @@ export const ROLE_LIST = [
         description: '对敌方造成0.5-1心伤害',
         cooldown: 0,
         targetType: 'enemy',
-        hitRate: 0.9,
-        effect: (target) => ({ damage: 0.5 + Math.random() * 0.5, buff: null })
+        hitRate: 1,
+        effect: (target, caster) => ({ damage: 0.5 + Math.random() * 0.5, buff: null })
       },
       {
         name: '激励之歌',
@@ -610,7 +598,7 @@ export const ROLE_LIST = [
         cooldown: 2,
         targetType: 'ally',
         hitRate: 1,
-        effect: (target) => ({
+        effect: (target, caster) => ({
           damage: 0,
           buff: { ...BUFF_LIST.DOUBLE_DAMAGE, duration: 2 }
         })
@@ -622,13 +610,17 @@ export const ROLE_LIST = [
         cooldown: 4,
         targetType: 'allAlly',
         hitRate: 1,
-        effect: (target) => ({
+        effect: (target, caster) => ({
           damage: -1,
           buff: [
             BUFF_LIST.PURIFY,
             { ...BUFF_LIST.SPEED_UP, duration: 2 }
           ]
         })
+      }
+    ]
+  }
+];
       }
     ]
   }
