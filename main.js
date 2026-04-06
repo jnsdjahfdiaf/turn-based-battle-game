@@ -1,18 +1,16 @@
 import { ROLE_LIST } from './roleConfig.js';
 import { BUFF_LIST } from './buffConfig.js';
 // ==============================
-// 🔧 游戏规则配置区 - 可修改基础规则
+// 游戏规则配置，已经去掉受击概率，适配3个角色+3站位
 // ==============================
 const GAME_CONFIG = {
-  MAX_ROUND: 20, // 最大回合数
-  ROLES_PER_PLAYER: 2, // 每个玩家可选角色数
-  FRONT_HIT_RATE: 0.7, // 前排受击概率
-  BACK_HIT_RATE: 0.3, // 后排受击概率
-  // TODO: 可新增能量系统、段位规则等配置
+  MAX_ROUND: 20,
+  ROLES_PER_PLAYER: 3, // 每个玩家选3个角色，适配3个站位
+  // 已经去掉前后排受击概率，符合要求：所有技能都是指向性选择
 };
 // 游戏全局状态
 let gameState = {
-  stage: 'roleSelect', // roleSelect/positionSelect/battle/end
+  stage: 'roleSelect',
   currentPlayer: 1,
   round: 1,
   players: {
@@ -22,6 +20,7 @@ let gameState = {
   firstPlayer: null,
   selectedRole: null,
   selectedSkill: null,
+  selectedSkillIndex: null,
   selectingTarget: false
 };
 // DOM元素缓存
@@ -48,11 +47,11 @@ const $resultModal = $('result-modal');
 const $resultText = $('result-text');
 const $resultDesc = $('result-desc');
 const $restartBtn = $('restart-btn');
-const $switchSelectPlayer = $('switch-select-player'); // 新增的切换按钮
+const $switchSelectPlayer = $('switch-select-player');
+
 // ==============================
 // 工具函数
 // ==============================
-// 渲染心形血量
 function renderHp(hp, maxHp) {
   let html = '';
   const full = Math.floor(hp);
@@ -63,7 +62,6 @@ function renderHp(hp, maxHp) {
   html += '<div class="heart empty"></div>'.repeat(empty);
   return html;
 }
-// 渲染Buff标签
 function renderBuffs(buffs) {
   if (!buffs.length) return '';
   return buffs.map(b => `
@@ -72,14 +70,13 @@ function renderBuffs(buffs) {
     </div>
   `).join('');
 }
-// 检查玩家是否全灭
 function isPlayerAllDead(playerId) {
   return gameState.players[playerId].battleRoles.every(r => r.currentHp <= 0);
 }
-// 计算玩家总剩余血量
 function getPlayerTotalHp(playerId) {
   return gameState.players[playerId].battleRoles.reduce((sum, r) => sum + r.currentHp, 0);
 }
+
 // ==============================
 // 选角阶段逻辑
 // ==============================
@@ -100,45 +97,41 @@ function initRoleSelect() {
     card.addEventListener('click', () => handleRoleSelect(role.id));
     $roleList.appendChild(card);
   });
-  // 初始化更新切换按钮文本
   $switchSelectPlayer.textContent = `当前配置：玩家${gameState.currentPlayer}`;
   updateSelectedRolesTip();
   updateRoleCardStatus();
 }
-// ===== 修正后的选角玩家切换逻辑 =====
+// 选角玩家切换
 $switchSelectPlayer.addEventListener('click', () => {
-  // 修正：原来的gameState.current.current不存在，正确属性是gameState.currentPlayer
   gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
   $switchSelectPlayer.textContent = `当前配置：玩家${gameState.currentPlayer}`;
   updateRoleCardStatus();
-  $stageTip.textContent = `请玩家${gameState.currentPlayer}选择2名参战角色`;
+  $stageTip.textContent = `请玩家${gameState.currentPlayer}选择参战角色`;
 });
-// ================================
 
 function handleRoleSelect(roleId) {
-  // 修正：属性名错误，改成正确的currentPlayer
   const curPlayer = gameState.currentPlayer;
   const selected = gameState.players[curPlayer].selectedRoles;
   const otherPlayer = curPlayer === 1 ? 2 : 1;
-  // 如果当前玩家已经选了这个角色，就取消选择
+  // 取消选中
   if (selected.includes(roleId)) {
     selected.splice(selected.indexOf(roleId), 1);
   } else {
-    // 检查是否已经被对方选了
+    // 检查是否被对方选了
     if (gameState.players[otherPlayer].selectedRoles.includes(roleId)) {
       alert('该角色已被对方选择，请选其他角色');
       return;
     }
-    // 检查当前玩家是否选满
+    // 检查是否选满
     if (selected.length >= GAME_CONFIG.ROLES_PER_PLAYER) {
-      alert(`玩家${curPlayer}已选满${GAME_CONFIG.ROLES_PER_PLAYER}个角色，可切换到另一个玩家选择，或取消已选角色重新选`);
+      alert(`玩家${curPlayer}已选满${GAME_CONFIG.ROLES_PER_PLAYER}个角色，可切换到另一个玩家选择，或取消已选重新选`);
       return;
     }
     selected.push(roleId);
   }
   updateSelectedRolesTip();
   updateRoleCardStatus();
-  // 只要两个玩家都选满了，确认按钮就亮
+  // 两个都选满就激活确认按钮
   const p1Done = gameState.players[1].selectedRoles.length === GAME_CONFIG.ROLES_PER_PLAYER;
   const p2Done = gameState.players[2].selectedRoles.length === GAME_CONFIG.ROLES_PER_PLAYER;
   $confirmRolesBtn.disabled = !(p1Done && p2Done);
@@ -152,22 +145,23 @@ function updateRoleCardStatus() {
     const roleId = card.dataset.roleId;
     const p1Sel = gameState.players[1].selectedRoles.includes(roleId);
     const p2Sel = gameState.players[2].selectedRoles.includes(roleId);
-    // 修正：属性名错误，改成正确的currentPlayer
     const isSelectedByCurPlayer = gameState.currentPlayer === 1 ? p1Sel : p2Sel;
     const isSelectedByOther = gameState.currentPlayer === 1 ? p2Sel : p1Sel;
     card.classList.toggle('selected', isSelectedByCurPlayer);
-    // 区分玩家1/玩家2的选中样式
+    // 区分双方选中样式
     if (isSelectedByOther) {
       card.style.borderColor = '#3498db';
       card.style.background = '#e3f2fd';
+      card.classList.add('disabled');
     } else if (isSelectedByCurPlayer) {
       card.style.borderColor = '#e74c3c';
       card.style.background = '#ffebee';
+      card.classList.remove('disabled');
     } else {
       card.style.borderColor = '#e0e0e0';
       card.style.background = 'white';
+      card.classList.remove('disabled');
     }
-    card.classList.toggle('disabled', isSelectedByOther);
   });
 }
 $confirmRolesBtn.addEventListener('click', () => {
@@ -178,8 +172,9 @@ $confirmRolesBtn.addEventListener('click', () => {
   $stageTip.textContent = '请玩家1安排角色站位';
   initPositionSelect();
 });
+
 // ==============================
-// 站位选择阶段逻辑
+// 站位选择阶段（适配3个站位）
 // ==============================
 function initPositionSelect() {
   renderPositionSlots(1);
@@ -197,11 +192,12 @@ function renderPositionSlots(playerId) {
       slot.innerHTML = `<img src="${role.avatar}" style="width:50px; border-radius:50%;"><div>${role.name}</div>`;
       slot.classList.add('filled');
     } else {
-      slot.textContent = pos === 'front' ? '前排（受击概率70%）' : '后排（受击概率30%）';
+      slot.textContent = pos === 'left' ? '左侧' : pos === 'center' ? '中路' : '右侧';
       slot.classList.remove('filled');
     }
     slot.onclick = playerId === gameState.currentPlayer ? () => handlePositionSelect(playerId, pos) : null;
   });
+  // 检查是否都填完了
   const p1Done = Object.keys(gameState.players[1].positions).length === GAME_CONFIG.ROLES_PER_PLAYER;
   const p2Done = Object.keys(gameState.players[2].positions).length === GAME_CONFIG.ROLES_PER_PLAYER;
   $confirmPositionsBtn.disabled = !(p1Done && p2Done);
@@ -234,8 +230,9 @@ $confirmPositionsBtn.addEventListener('click', () => {
   renderBattleField();
   renderSkillList();
 });
+
 // ==============================
-// 战斗阶段逻辑
+// 战斗阶段逻辑（去掉命中判定，所有技能必中）
 // ==============================
 function initBattleRoles() {
   [1,2].forEach(playerId => {
@@ -281,7 +278,7 @@ function renderPlayerBattleRoles(playerId, container) {
     card.dataset.roleId = role.id;
     card.dataset.playerId = playerId;
     card.innerHTML = `
-      <div class="position-tag">${role.position === 'front' ? '前排' : '后排'}</div>
+      <div class="position-tag">${role.position === 'left' ? '左' : role.position === 'center' ? '中' : '右'}</div>
       <img src="${role.avatar}" class="role-avatar">
       <div class="role-name">${role.name}</div>
       <div class="hp-display">${renderHp(role.currentHp, role.maxHp)}</div>
@@ -313,7 +310,7 @@ function handleOperateRoleSelect(role) {
 function renderSkillList() {
   $skillList.innerHTML = '';
   if (!gameState.selectedRole) {
-    $skillList.innerHTML = '<div style="grid-column:1/-1; color:#999;">请先选择操作角色</div>';
+    $skillList.innerHTML = '<div style="grid-column:1/-1; color:#999;">请先选择你要操作的角色</div>';
     return;
   }
   gameState.selectedRole.skills.forEach((skill, idx) => {
@@ -360,14 +357,10 @@ function handleTargetSelect(target, targetPlayerId) {
   } else {
     targets = [target];
   }
-  // 命中判定
-  if (Math.random() > skill.hitRate) {
-    alert(`技能「${skill.name}」未命中！`);
-    return endSkillCast();
-  }
-  // 执行技能效果
+  // 去掉命中判定，所有技能必定命中，符合要求
   targets.forEach(t => {
-    const effect = skill.effect(t);
+    // 修复：传入施法者caster，让自伤/吸血技能正常工作
+    const effect = skill.effect(t, caster);
     let damage = effect.damage * caster.damageDealtMultiplier;
     // 处理伤害/治疗
     if (damage > 0) {
@@ -443,6 +436,7 @@ $endTurnBtn.addEventListener('click', () => {
   renderBattleField();
   renderSkillList();
 });
+
 // ==============================
 // 胜负判定
 // ==============================
@@ -481,13 +475,13 @@ $restartBtn.addEventListener('click', () => {
   gameState = {
     stage: 'roleSelect', currentPlayer: 1, round: 1,
     players: {1:{selectedRoles:[],positions:{},battleRoles:[]},2:{selectedRoles:[],positions:{},battleRoles:[]}},
-    firstPlayer: null, selectedRole: null, selectedSkill: null, selectingTarget: false
+    firstPlayer: null, selectedRole: null, selectedSkill: null, selectedSkillIndex: null, selectingTarget: false
   };
   $resultModal.style.display = 'none';
   $battleSection.style.display = 'none';
   $roundCounter.style.display = 'none';
   $roleSelectSection.style.display = 'block';
-  $stageTip.textContent = '请玩家1选择2名参战角色';
+  $stageTip.textContent = '请玩家1选择参战角色';
   initRoleSelect();
 });
 
