@@ -1,3 +1,9 @@
+// 游戏规则配置
+const GAME_CONFIG = {
+  MAX_ROUND: 20,
+  ROLES_PER_PLAYER: 3
+};
+
 // ==============================
 // DOM元素缓存
 // ==============================
@@ -549,7 +555,7 @@ function processRoundEnd() {
       });
       // 减少持续时间，移除过期Buff
       role.buffs.forEach(buff => buff.duration--);
-      role.buffs = role.buffs.filter(buff => b.duration > 0);
+      role.buffs = role.buffs.filter(buff => buff.duration > 0);
       // 重置每回合属性乘数
       role.damageTakenMultiplier = 1;
       role.damageDealtMultiplier = 1;
@@ -651,6 +657,6 @@ $restartBtn.addEventListener('click', () => {
 
 // 初始化游戏
 initRoleSelect();
-
-// 初始化游戏
-initRoleSelect();
+  </script>
+</body>
+</html>
