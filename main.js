@@ -304,15 +304,17 @@ function renderPlayerBattleRoles(playerId, container) {
       }
     }
     if (!gameState.selectingTarget && playerId === gameState.currentOperatePlayer && role.currentHp>0) {
-      card.addEventListener('click', () => handleOperateRoleSelect(role));
+      // 修复：传入事件参数e，替代全局event
+      card.addEventListener('click', (e) => handleOperateRoleSelect(role, e));
     }
     container.appendChild(card);
   });
 }
-function handleOperateRoleSelect(role) {
+// 修复：添加事件参数e，不再使用全局event
+function handleOperateRoleSelect(role, e) {
   gameState.selectedRole = role;
   document.querySelectorAll('.battle-role-card').forEach(c => c.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
+  e.currentTarget.classList.add('selected');
   renderSkillList();
 }
 function renderSkillList() {
