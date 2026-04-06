@@ -9,109 +9,96 @@
 // effect: Buff生效时的逻辑（修改角色属性）
 // onTurnEnd: 每回合结束时触发的逻辑（比如灼伤掉血）
 // ==============================
+// buffConfig.js 完整可运行版本
 export const BUFF_LIST = {
-  // ---------- 负面Debuff ----------
-  SLOW: {
-    id: 'slow',
-    name: '减速',
-    type: 'debuff',
-    description: '先后手判定时点数-20',
-    duration: 2,
-    effect: (role) => role.initiativeModifier = -20,
-    onTurnEnd: null
-  },
-  DAMAGE_REDUCTION: {
-    id: 'damage_reduction',
-    name: '伤害减半',
-    type: 'debuff',
-    description: '受到的伤害降低50%',
-    duration: 2,
-    effect: (role) => role.damageTakenMultiplier = 0.5,
-    onTurnEnd: null
-  },
-  STUN: {
-    id: 'stun',
-    name: '眩晕',
-    type: 'debuff',
-    description: '无法发动攻击',
-    duration: 1,
-    effect: (role) => role.canAttack = false,
-    onTurnEnd: null
-  },
+  // 灼伤：每回合掉0.5心
   BURN: {
     id: 'burn',
     name: '灼伤',
     type: 'debuff',
-    description: '每回合结束受到0.5心伤害',
-    duration: 3,
-    effect: null,
-    onTurnEnd: (role) => role.currentHp = Math.max(0, role.currentHp - 0.5)
+    description: '每回合受到0.5心伤害',
+    onTurnEnd: (role) => {
+      role.currentHp = Math.max(0, role.currentHp - 0.5);
+    }
   },
+  // 减速：这里只是标记，不做额外处理，搭配受击已经不需要了
+  SLOW: {
+    id: 'slow',
+    name: '减速',
+    type: 'debuff',
+    description: '先手权降低',
+  },
+  // 寒霜：受到伤害增加10%
   FROST: {
     id: 'frost',
     name: '寒霜',
     type: 'debuff',
-    description: '每回合结束受到0.5心伤害',
-    duration: 3,
-    effect: null,
-    onTurnEnd: (role) => role.currentHp = Math.max(0, role.currentHp - 0.5)
+    description: '受到伤害增加10%',
+    effect: (role) => {
+      role.damageTakenMultiplier *= 1.1;
+    }
   },
-  // ---------- 正面Buff ----------
+  // 眩晕：无法行动
+  STUN: {
+    id: 'stun',
+    name: '眩晕',
+    type: 'debuff',
+    description: '本回合无法行动',
+    onTurnEnd: (role) => {
+      role.canAttack = false;
+    }
+  },
+  // 护盾：吸收指定数量伤害
   SHIELD: {
     id: 'shield',
     name: '护盾',
     type: 'buff',
-    description: '抵消等量伤害，持续2回合',
-    duration: 2,
-    effect: (role, value) => role.shield = (role.shield || 0) + value,
-    onTurnEnd: null
+    description: '吸收伤害',
+    effect: (role, extraData) => {
+      role.shield += extraData;
+    }
   },
+  // 伤害减半
+  DAMAGE_REDUCTION: {
+    id: 'damage_reduction',
+    name: '伤害减半',
+    type: 'debuff',
+    description: '造成的伤害减半',
+    effect: (role) => {
+      role.damageDealtMultiplier *= 0.5;
+    }
+  },
+  // 伤害翻倍
   DOUBLE_DAMAGE: {
     id: 'double_damage',
     name: '伤害翻倍',
     type: 'buff',
-    description: '下一次攻击伤害翻倍',
-    duration: 1,
-    effect: (role) => role.damageDealtMultiplier = 2,
-    onTurnEnd: null
+    description: '造成的伤害翻倍',
+    effect: (role) => {
+      role.damageDealtMultiplier *= 2;
+    }
   },
+  // 加速：先手权增加
   SPEED_UP: {
     id: 'speed_up',
     name: '加速',
     type: 'buff',
-    description: '先后手判定时点数+20',
-    duration: 2,
-    effect: (role) => role.initiativeModifier = 20,
-    onTurnEnd: null
+    description: '先手权提升',
+    effect: (role) => {
+      role.initiativeModifier += 10;
+    }
   },
+  // 净化：移除所有负面Buff
   PURIFY: {
     id: 'purify',
     name: '净化',
     type: 'buff',
     description: '清除所有负面Buff',
-    duration: 0, // 即时生效无持续时间
-    effect: (role) => role.buffs = role.buffs.filter(b => b.type !== 'debuff'),
-    onTurnEnd: null
-  },
-  HP_UP: {
-    id: 'hp_up',
-    name: '回血',
-    type: 'buff',
-    description: '增加当前血量，不超过上限',
-    duration: 0,
-    effect: (role, value) => role.currentHp = Math.min(role.maxHp, role.currentHp + value),
-    onTurnEnd: null
-  },
-  MAX_HP_UP: {
-    id: 'max_hp_up',
-    name: '血量上限提升',
-    type: 'buff',
-    description: '永久增加血量上限',
-    duration: 0,
-    effect: (role, value) => {
-      role.maxHp += value;
-      role.currentHp += value;
-    },
+    effect: (role) => {
+      role.buffs = role.buffs.filter(b => b.type === 'buff');
+    }
+  }
+};
     onTurnEnd: null
   }
   // TODO: 在这里新增你想要的Buff
