@@ -495,4 +495,6 @@ $restartBtn.addEventListener('click', () => {
 initRoleSelect();
 // 初始化游戏
 initRoleSelect();
+// 页面加载后自动启动游戏，渲染角色列表
+initRoleSelect();
 // TODO: 在这里添加音效、动画、联机匹配等扩展功能
