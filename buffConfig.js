@@ -13,6 +13,9 @@
 // ==============================
 // Buff效果配置
 // ==============================
+// ==============================
+// Buff效果配置
+// ==============================
 const BUFF_LIST = {
   attackUp: { 
     id: 'attackUp', name: '攻击强化', type: 'buff', 
@@ -21,8 +24,8 @@ const BUFF_LIST = {
   },
   attackDown: { 
     id: 'attackDown', name: '攻击弱化', type: 'debuff', 
-    description: '造成的伤害降低30%', duration: 2,
-    effect: (t) => { t.damageDealtMultiplier *= 0.7; } 
+    description: '造成的伤害降低50%', duration: 2,
+    effect: (t) => { t.damageDealtMultiplier *= 0.5; } 
   },
   shieldUp: { 
     id: 'shieldUp', name: '护盾', type: 'buff', 
@@ -38,8 +41,8 @@ const BUFF_LIST = {
   },
   reflect: { 
     id: 'reflect', name: '反伤', type: 'buff', 
-    description: '受到伤害时反弹30%', duration: 2,
-    onHit: (t, dmg) => { return { damage: dmg * 0.3, targetType: 'lastAttacker' }; } 
+    description: '受到伤害时反弹50%', duration: 2,
+    onHit: (t, dmg) => { return { damage: dmg * 0.5, targetType: 'lastAttacker' }; } 
   },
   mark: { 
     id: 'mark', name: '致命标记', type: 'debuff', 
@@ -66,8 +69,8 @@ const BUFF_LIST = {
   },
   burn: { 
     id: 'burn', name: '灼烧', type: 'debuff', 
-    description: '每回合结束时受到0.8点真实伤害，攻击时额外造成0.3点伤害', duration: 3,
-    onTurnEnd: (t) => { t.currentHp = Math.max(0, t.currentHp - 0.8); },
+    description: '每回合结束时受到0.5点真实伤害，攻击时额外造成0.3点伤害', duration: 3,
+    onTurnEnd: (t) => { t.currentHp = Math.max(0, t.currentHp - 0.5); },
     effect: (t) => { t.extraBurnDamage = 0.3; } 
   },
   lastStand: { 
