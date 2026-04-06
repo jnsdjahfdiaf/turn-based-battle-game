@@ -48,6 +48,7 @@ const $resultModal = $('result-modal');
 const $resultText = $('result-text');
 const $resultDesc = $('result-desc');
 const $restartBtn = $('restart-btn');
+const $switchSelectPlayer = $('switch-select-player'); // 新增这行
 // ==============================
 // 工具函数
 // ==============================
