@@ -1,12 +1,4 @@
-// 游戏规则配置
-const GAME_CONFIG = {
-  MAX_ROUND: 20,
-  ROLES_PER_PLAYER: 3
-};
-
-// ==============================
 // DOM元素缓存
-// ==============================
 const $ = id => document.getElementById(id);
 const $stageTip = $('stage-tip');
 const $roundCounter = $('round-counter');
@@ -31,9 +23,7 @@ const $resultDesc = $('result-desc');
 const $restartBtn = $('restart-btn');
 const $switchSelectPlayer = $('switch-select-player');
 
-// ==============================
 // 游戏全局状态
-// ==============================
 let gameState = {
   stage: 'roleSelect', // 整体游戏阶段：roleSelect/positionSelect/battle
   currentOperatePlayer: 1, // 当前正在操作的玩家
@@ -56,9 +46,7 @@ let gameState = {
   lastAttacker: null // 用于反伤记录
 };
 
-// ==============================
 // 工具函数
-// ==============================
 function renderHp(hp, maxHp) {
   let html = '';
   const full = Math.floor(hp);
@@ -91,9 +79,7 @@ function getPlayerTotalHp(playerId) {
   return gameState.players[playerId].battleRoles.reduce((sum, r) => sum + r.currentHp, 0);
 }
 
-// ==============================
 // 选角阶段逻辑
-// ==============================
 function initRoleSelect() {
   $roleList.innerHTML = '';
   ROLE_LIST.forEach(role => {
@@ -181,9 +167,7 @@ $confirmRolesBtn.addEventListener('click', () => {
   initPositionSelect();
 });
 
-// ==============================
 // 站位选择阶段
-// ==============================
 function initPositionSelect() {
   renderPositionSlots(1);
   renderPositionSlots(2);
@@ -239,9 +223,7 @@ $confirmPositionsBtn.addEventListener('click', () => {
   renderSkillList();
 });
 
-// ==============================
 // 战斗初始化
-// ==============================
 function initBattleRoles() {
   [1,2].forEach(playerId => {
     const positions = gameState.players[playerId].positions;
@@ -272,9 +254,7 @@ function rollInitiative() {
   alert(`先后手判定：玩家1 ${p1Roll} vs 玩家2 ${p2Roll}，玩家${gameState.firstPlayer}先手！`);
 }
 
-// ==============================
 // 战斗渲染逻辑
-// ==============================
 function renderBattleField() {
   renderPlayerBattleRoles(1, $player1Side.querySelector('.role-cards'));
   renderPlayerBattleRoles(2, $player2Side.querySelector('.role-cards'));
@@ -368,9 +348,7 @@ function checkTargetable(targetType, targetPlayerId, role) {
   }
 }
 
-// ==============================
 // 核心：操作处理与结算
-// ==============================
 function handleTargetSelect(target, targetPlayerId) {
   const skill = gameState.selectedSkill;
   const caster = gameState.selectedRole;
@@ -572,9 +550,7 @@ function processRoundEnd() {
   });
 }
 
-// ==============================
 // 胜负判定
-// ==============================
 function checkGameEnd() {
   // 处理复活
   [1,2].forEach(playerId => {
@@ -654,9 +630,3 @@ $restartBtn.addEventListener('click', () => {
   $stageTip.textContent = '请玩家1选择参战角色';
   initRoleSelect();
 });
-
-// 初始化游戏
-initRoleSelect();
-  </script>
-</body>
-</html>
