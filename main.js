@@ -102,26 +102,41 @@ function initRoleSelect() {
   });
   updateSelectedRolesTip();
 }
+ // ===== 新增：选角玩家切换逻辑 =====
+  $switchSelectPlayer.addEventListener('click', () => {
+    gameState.currentPlayer = gameState.current.current === 1 ? 2 : 1;
+    $switchSelect.textContent = `当前配置：玩家${game.current.current}`;
+    updateRoleCardStatus();
+    $stageTip.textContent = `请玩家${game.current.current}选择参战角色`;
+  });
+  // ================================
+}
 function handleRoleSelect(roleId) {
-  const curPlayer = gameState.currentPlayer;
+  const curPlayer = gameState.current.current;
   const selected = gameState.players[curPlayer].selectedRoles;
   const otherPlayer = curPlayer === 1 ? 2 : 1;
+  // 如果当前玩家已经选了这个角色，就取消选择
   if (selected.includes(roleId)) {
     selected.splice(selected.indexOf(roleId), 1);
   } else {
-    if (selected.length >= GAME_CONFIG.ROLES_PER_PLAYER) return alert(`已选满${GAME_CONFIG.ROLES_PER_PLAYER}个角色`);
-    if (gameState.players[otherPlayer].selectedRoles.includes(roleId)) return alert('该角色已被对方选择');
+    // 检查是否已经被对方选了
+    if (gameState.players[otherPlayer].selectedRoles.includes(roleId)) {
+      alert('该角色已被对方选择，请选其他角色');
+      return;
+    }
+    // 检查当前玩家是否选满
+    if (selected.length >= GAME_CONFIG.ROLES_PER_PLAYER) {
+      alert(`玩家${curPlayer}已选满${GAME_CONFIG.ROLES_PER_PLAYER}个角色，可切换到玩家2选择，或取消已选角色重新选`);
+      return;
+    }
     selected.push(roleId);
   }
   updateSelectedRolesTip();
   updateRoleCardStatus();
+  // 只要两个玩家都选满了，确认按钮就亮
   const p1Done = gameState.players[1].selectedRoles.length === GAME_CONFIG.ROLES_PER_PLAYER;
   const p2Done = gameState.players[2].selectedRoles.length === GAME_CONFIG.ROLES_PER_PLAYER;
   $confirmRolesBtn.disabled = !(p1Done && p2Done);
-  if (selected.length === GAME_CONFIG.ROLES_PER_PLAYER && curPlayer === 1) {
-    gameState.currentPlayer = 2;
-    $stageTip.textContent = '请玩家2选择2名参战角色';
-  }
 }
 function updateSelectedRolesTip() {
   $player1Selected.textContent = `${gameState.players[1].selectedRoles.length}/${GAME_CONFIG.ROLES_PER_PLAYER}`;
@@ -132,8 +147,21 @@ function updateRoleCardStatus() {
     const roleId = card.dataset.roleId;
     const p1Sel = gameState.players[1].selectedRoles.includes(roleId);
     const p2Sel = gameState.players[2].selectedRoles.includes(roleId);
-    card.classList.toggle('selected', p1Sel || p2Sel);
-    card.classList.toggle('disabled', (p1Sel && gameState.currentPlayer===2) || (p2Sel && gameState.currentPlayer===1));
+    const isSelectedByCurPlayer = gameState.current.current === 1 ? p1Sel : p2Sel;
+    const isSelectedByOther = gameState.current.current === 1 ? p2Sel : p1Sel;
+    card.classList.toggle('selected', isSelectedByCurPlayer);
+    // 区分玩家1/玩家2的选中样式
+    if (isSelectedByOther) {
+      card.style.borderColor = '#3498db';
+      card.style.background = '#e3f2fd';
+    } else if (isSelectedByCurPlayer) {
+      card.style.borderColor = '#e74c3c';
+      card.style.background = '#ffebee';
+    } else {
+      card.style.borderColor = '#e0e0e0';
+      card.style.background = 'white';
+    }
+    card.classList.toggle('disabled', isSelectedByOther);
   });
 }
 $confirmRolesBtn.addEventListener('click', () => {
