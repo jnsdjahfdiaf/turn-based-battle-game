@@ -1,20 +1,5 @@
 // ==============================
 // 🔧 Buff编辑区 - 可自由添加/修改Buff效果
-// 参数说明：
-// id: 唯一标识
-// name: Buff显示名称
-// type: buff正面/debuff负面
-// description: 鼠标悬浮提示
-// duration: 默认持续回合数
-// effect: Buff生效时的逻辑（修改角色属性）
-// onTurnEnd: 每回合结束时触发的逻辑（比如灼伤掉血）
-// ==============================
-// buffConfig.js 完整可运行版本
-// ==============================
-// Buff效果配置
-// ==============================
-// ==============================
-// Buff效果配置
 // ==============================
 const BUFF_LIST = {
   attackUp: { 
@@ -106,6 +91,11 @@ const BUFF_LIST = {
     effect: (t) => { t.lifestealMultiplier *= 2; } 
   },
   confusion: { 
+    id: 'confusion', name: '混乱', type: 'debuff', 
+    description: '选择目标时会随机选择（包括友方）', duration: 2 
+  }
+};
+
     id: 'confusion', name: '混乱', type: 'debuff', 
     description: '选择目标时会随机选择（包括友方）', duration: 2 
   }
