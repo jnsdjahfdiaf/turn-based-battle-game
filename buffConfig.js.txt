@@ -1,0 +1,118 @@
+// ==============================
+// 🔧 Buff编辑区 - 可自由添加/修改Buff效果
+// 参数说明：
+// id: 唯一标识
+// name: Buff显示名称
+// type: buff正面/debuff负面
+// description: 鼠标悬浮提示
+// duration: 默认持续回合数
+// effect: Buff生效时的逻辑（修改角色属性）
+// onTurnEnd: 每回合结束时触发的逻辑（比如灼伤掉血）
+// ==============================
+export const BUFF_LIST = {
+  // ---------- 负面Debuff ----------
+  SLOW: {
+    id: 'slow',
+    name: '减速',
+    type: 'debuff',
+    description: '先后手判定时点数-20',
+    duration: 2,
+    effect: (role) => role.initiativeModifier = -20,
+    onTurnEnd: null
+  },
+  DAMAGE_REDUCTION: {
+    id: 'damage_reduction',
+    name: '伤害减半',
+    type: 'debuff',
+    description: '受到的伤害降低50%',
+    duration: 2,
+    effect: (role) => role.damageTakenMultiplier = 0.5,
+    onTurnEnd: null
+  },
+  STUN: {
+    id: 'stun',
+    name: '眩晕',
+    type: 'debuff',
+    description: '无法发动攻击',
+    duration: 1,
+    effect: (role) => role.canAttack = false,
+    onTurnEnd: null
+  },
+  BURN: {
+    id: 'burn',
+    name: '灼伤',
+    type: 'debuff',
+    description: '每回合结束受到0.5心伤害',
+    duration: 3,
+    effect: null,
+    onTurnEnd: (role) => role.currentHp = Math.max(0, role.currentHp - 0.5)
+  },
+  FROST: {
+    id: 'frost',
+    name: '寒霜',
+    type: 'debuff',
+    description: '每回合结束受到0.5心伤害',
+    duration: 3,
+    effect: null,
+    onTurnEnd: (role) => role.currentHp = Math.max(0, role.currentHp - 0.5)
+  },
+  // ---------- 正面Buff ----------
+  SHIELD: {
+    id: 'shield',
+    name: '护盾',
+    type: 'buff',
+    description: '抵消等量伤害，持续2回合',
+    duration: 2,
+    effect: (role, value) => role.shield = (role.shield || 0) + value,
+    onTurnEnd: null
+  },
+  DOUBLE_DAMAGE: {
+    id: 'double_damage',
+    name: '伤害翻倍',
+    type: 'buff',
+    description: '下一次攻击伤害翻倍',
+    duration: 1,
+    effect: (role) => role.damageDealtMultiplier = 2,
+    onTurnEnd: null
+  },
+  SPEED_UP: {
+    id: 'speed_up',
+    name: '加速',
+    type: 'buff',
+    description: '先后手判定时点数+20',
+    duration: 2,
+    effect: (role) => role.initiativeModifier = 20,
+    onTurnEnd: null
+  },
+  PURIFY: {
+    id: 'purify',
+    name: '净化',
+    type: 'buff',
+    description: '清除所有负面Buff',
+    duration: 0, // 即时生效无持续时间
+    effect: (role) => role.buffs = role.buffs.filter(b => b.type !== 'debuff'),
+    onTurnEnd: null
+  },
+  HP_UP: {
+    id: 'hp_up',
+    name: '回血',
+    type: 'buff',
+    description: '增加当前血量，不超过上限',
+    duration: 0,
+    effect: (role, value) => role.currentHp = Math.min(role.maxHp, role.currentHp + value),
+    onTurnEnd: null
+  },
+  MAX_HP_UP: {
+    id: 'max_hp_up',
+    name: '血量上限提升',
+    type: 'buff',
+    description: '永久增加血量上限',
+    duration: 0,
+    effect: (role, value) => {
+      role.maxHp += value;
+      role.currentHp += value;
+    },
+    onTurnEnd: null
+  }
+  // TODO: 在这里新增你想要的Buff
+};
