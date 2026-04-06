@@ -48,7 +48,7 @@ const $resultModal = $('result-modal');
 const $resultText = $('result-text');
 const $resultDesc = $('result-desc');
 const $restartBtn = $('restart-btn');
-const $switchSelectPlayer = $('switch-select-player'); // 新增这行
+const $switchSelectPlayer = $('switch-select-player'); // 新增的切换按钮
 // ==============================
 // 工具函数
 // ==============================
@@ -100,19 +100,24 @@ function initRoleSelect() {
     card.addEventListener('click', () => handleRoleSelect(role.id));
     $roleList.appendChild(card);
   });
+  // 初始化更新切换按钮文本
+  $switchSelectPlayer.textContent = `当前配置：玩家${gameState.currentPlayer}`;
   updateSelectedRolesTip();
+  updateRoleCardStatus();
 }
- // ===== 新增：选角玩家切换逻辑 =====
-  $switchSelectPlayer.addEventListener('click', () => {
-    gameState.currentPlayer = gameState.current.current === 1 ? 2 : 1;
-    $switchSelect.textContent = `当前配置：玩家${game.current.current}`;
-    updateRoleCardStatus();
-    $stageTip.textContent = `请玩家${game.current.current}选择参战角色`;
-  });
-  // ================================
-}
+// ===== 修正后的选角玩家切换逻辑 =====
+$switchSelectPlayer.addEventListener('click', () => {
+  // 修正：原来的gameState.current.current不存在，正确属性是gameState.currentPlayer
+  gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+  $switchSelectPlayer.textContent = `当前配置：玩家${gameState.currentPlayer}`;
+  updateRoleCardStatus();
+  $stageTip.textContent = `请玩家${gameState.currentPlayer}选择2名参战角色`;
+});
+// ================================
+
 function handleRoleSelect(roleId) {
-  const curPlayer = gameState.current.current;
+  // 修正：属性名错误，改成正确的currentPlayer
+  const curPlayer = gameState.currentPlayer;
   const selected = gameState.players[curPlayer].selectedRoles;
   const otherPlayer = curPlayer === 1 ? 2 : 1;
   // 如果当前玩家已经选了这个角色，就取消选择
@@ -126,7 +131,7 @@ function handleRoleSelect(roleId) {
     }
     // 检查当前玩家是否选满
     if (selected.length >= GAME_CONFIG.ROLES_PER_PLAYER) {
-      alert(`玩家${curPlayer}已选满${GAME_CONFIG.ROLES_PER_PLAYER}个角色，可切换到玩家2选择，或取消已选角色重新选`);
+      alert(`玩家${curPlayer}已选满${GAME_CONFIG.ROLES_PER_PLAYER}个角色，可切换到另一个玩家选择，或取消已选角色重新选`);
       return;
     }
     selected.push(roleId);
@@ -147,8 +152,9 @@ function updateRoleCardStatus() {
     const roleId = card.dataset.roleId;
     const p1Sel = gameState.players[1].selectedRoles.includes(roleId);
     const p2Sel = gameState.players[2].selectedRoles.includes(roleId);
-    const isSelectedByCurPlayer = gameState.current.current === 1 ? p1Sel : p2Sel;
-    const isSelectedByOther = gameState.current.current === 1 ? p2Sel : p1Sel;
+    // 修正：属性名错误，改成正确的currentPlayer
+    const isSelectedByCurPlayer = gameState.currentPlayer === 1 ? p1Sel : p2Sel;
+    const isSelectedByOther = gameState.currentPlayer === 1 ? p2Sel : p1Sel;
     card.classList.toggle('selected', isSelectedByCurPlayer);
     // 区分玩家1/玩家2的选中样式
     if (isSelectedByOther) {
@@ -484,6 +490,9 @@ $restartBtn.addEventListener('click', () => {
   $stageTip.textContent = '请玩家1选择2名参战角色';
   initRoleSelect();
 });
+
+// 启动游戏
+initRoleSelect();
 // 初始化游戏
 initRoleSelect();
 // TODO: 在这里添加音效、动画、联机匹配等扩展功能
