@@ -10,96 +10,100 @@
 // onTurnEnd: 每回合结束时触发的逻辑（比如灼伤掉血）
 // ==============================
 // buffConfig.js 完整可运行版本
-export const BUFF_LIST = {
-  // 灼伤：每回合掉0.5心
-  BURN: {
-    id: 'burn',
-    name: '灼伤',
-    type: 'debuff',
-    description: '每回合受到0.5心伤害',
-    onTurnEnd: (role) => {
-      role.currentHp = Math.max(0, role.currentHp - 0.5);
-    }
+// ==============================
+// Buff效果配置
+// ==============================
+const BUFF_LIST = {
+  attackUp: { 
+    id: 'attackUp', name: '攻击强化', type: 'buff', 
+    description: '造成的伤害提升50%', duration: 2,
+    effect: (t) => { t.damageDealtMultiplier *= 1.5; } 
   },
-  // 减速：这里只是标记，不做额外处理，搭配受击已经不需要了
-  SLOW: {
-    id: 'slow',
-    name: '减速',
-    type: 'debuff',
-    description: '先手权降低',
+  attackDown: { 
+    id: 'attackDown', name: '攻击弱化', type: 'debuff', 
+    description: '造成的伤害降低30%', duration: 2,
+    effect: (t) => { t.damageDealtMultiplier *= 0.7; } 
   },
-  // 寒霜：受到伤害增加10%
-  FROST: {
-    id: 'frost',
-    name: '寒霜',
-    type: 'debuff',
-    description: '受到伤害增加10%',
-    effect: (role) => {
-      role.damageTakenMultiplier *= 1.1;
-    }
+  shieldUp: { 
+    id: 'shieldUp', name: '护盾', type: 'buff', 
+    description: '吸收伤害', duration: 0 // 一次性
   },
-  // 眩晕：无法行动
-  STUN: {
-    id: 'stun',
-    name: '眩晕',
-    type: 'debuff',
-    description: '本回合无法行动',
-    onTurnEnd: (role) => {
-      role.canAttack = false;
-    }
+  silence: { 
+    id: 'silence', name: '沉默', type: 'debuff', 
+    description: '无法使用二技能和大招', duration: 2 
   },
-  // 护盾：吸收指定数量伤害
-  SHIELD: {
-    id: 'shield',
-    name: '护盾',
-    type: 'buff',
-    description: '吸收伤害',
-    effect: (role, extraData) => {
-      role.shield += extraData;
-    }
+  dodge: { 
+    id: 'dodge', name: '闪避', type: 'buff', 
+    description: '闪避下一次单体技能', duration: 1 
   },
-  // 伤害减半
-  DAMAGE_REDUCTION: {
-    id: 'damage_reduction',
-    name: '伤害减半',
-    type: 'debuff',
-    description: '造成的伤害减半',
-    effect: (role) => {
-      role.damageDealtMultiplier *= 0.5;
-    }
+  reflect: { 
+    id: 'reflect', name: '反伤', type: 'buff', 
+    description: '受到伤害时反弹30%', duration: 2,
+    onHit: (t, dmg) => { return { damage: dmg * 0.3, targetType: 'lastAttacker' }; } 
   },
-  // 伤害翻倍
-  DOUBLE_DAMAGE: {
-    id: 'double_damage',
-    name: '伤害翻倍',
-    type: 'buff',
-    description: '造成的伤害翻倍',
-    effect: (role) => {
-      role.damageDealtMultiplier *= 2;
-    }
+  mark: { 
+    id: 'mark', name: '致命标记', type: 'debuff', 
+    description: '受到的下一次伤害翻倍', duration: 3 
   },
-  // 加速：先手权增加
-  SPEED_UP: {
-    id: 'speed_up',
-    name: '加速',
-    type: 'buff',
-    description: '先手权提升',
-    effect: (role) => {
-      role.initiativeModifier += 10;
-    }
+  invisibility: { 
+    id: 'invisibility', name: '隐身', type: 'buff', 
+    description: '无法被选为单体技能目标，群体技能正常命中', duration: 2 
   },
-  // 净化：移除所有负面Buff
-  PURIFY: {
-    id: 'purify',
-    name: '净化',
-    type: 'buff',
-    description: '清除所有负面Buff',
-    effect: (role) => {
-      role.buffs = role.buffs.filter(b => b.type === 'buff');
-    }
+  taunt: { 
+    id: 'taunt', name: '嘲讽', type: 'buff', 
+    description: '强制敌人优先攻击自己', duration: 2 
+  },
+  bleed: { 
+    id: 'bleed', name: '流血', type: 'debuff', 
+    description: '每回合结束时受到0.5点真实伤害', duration: 3,
+    onTurnEnd: (t) => { t.currentHp = Math.max(0, t.currentHp - 0.5); } 
+  },
+  poison: { 
+    id: 'poison', name: '剧毒', type: 'debuff', 
+    description: '每回合结束时受到1点真实伤害，治疗效果减半', duration: 3,
+    onTurnEnd: (t) => { t.currentHp = Math.max(0, t.currentHp - 1); },
+    effect: (t) => { t.healTakenMultiplier *= 0.5; } 
+  },
+  burn: { 
+    id: 'burn', name: '灼烧', type: 'debuff', 
+    description: '每回合结束时受到0.8点真实伤害，攻击时额外造成0.3点伤害', duration: 3,
+    onTurnEnd: (t) => { t.currentHp = Math.max(0, t.currentHp - 0.8); },
+    effect: (t) => { t.extraBurnDamage = 0.3; } 
+  },
+  lastStand: { 
+    id: 'lastStand', name: '回光返照', type: 'buff', 
+    description: '首次死亡时复活，恢复2点血量，清除所有Buff/Debuff', duration: 0,
+    onDeath: (t) => { 
+      if (!t.hasRevived) {
+        t.hasRevived = true;
+        t.currentHp = 2;
+        t.buffs = [];
+        t.debuffs = [];
+        return true; // 表示成功复活
+      }
+      return false;
+    } 
+  },
+  critBoost: { 
+    id: 'critBoost', name: '暴击增幅', type: 'buff', 
+    description: '下一次单体技能伤害翻倍（不含额外伤害）', duration: 1 
+  },
+  cleanse: { 
+    id: 'cleanse', name: '净化', type: 'buff', 
+    description: '清除所有Debuff', duration: 0 // 一次性
+  },
+  damageReduction: { 
+    id: 'damageReduction', name: '伤害减免', type: 'buff', 
+    description: '受到的伤害降低50%', duration: 2,
+    effect: (t) => { t.damageTakenMultiplier *= 0.5; } 
+  },
+  lifestealBoost: { 
+    id: 'lifestealBoost', name: '吸血增强', type: 'buff', 
+    description: '吸血效果翻倍', duration: 2,
+    effect: (t) => { t.lifestealMultiplier *= 2; } 
+  },
+  confusion: { 
+    id: 'confusion', name: '混乱', type: 'debuff', 
+    description: '选择目标时会随机选择（包括友方）', duration: 2 
   }
-};
-    onTurnEnd: null
-  }
-  // TODO: 在这里新增你想要的Buff
 };
