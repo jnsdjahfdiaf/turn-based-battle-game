@@ -1,0 +1,149 @@
+import { BUFF_LIST } from './buffConfig.js';
+// ==============================
+// 🔧 角色编辑区 - 可自由添加/修改角色
+// 角色参数说明：
+// id: 唯一标识，不能重复
+// name: 角色显示名称
+// avatar: 角色头像链接（可替换为自己的图片路径）
+// maxHp: 最大血量，对应显示几颗心（支持0.5为单位）
+// skills: 技能列表，必须包含3个技能（1普攻/2小技能/3大招）
+//   技能参数说明：
+//   name: 技能名称
+//   type: damage伤害/heal治疗/buff增益
+//   description: 技能描述，显示在UI上
+//   cooldown: 冷却回合数，0为无冷却
+//   targetType: 目标类型（enemy敌方/ally己方/self自己/allEnemy全体敌方/allAlly全体己方）
+//   hitRate: 命中率，0-1之间，1为必中
+//   effect: 技能效果函数，返回伤害和Buff结果
+// ==============================
+export const ROLE_LIST = [
+  {
+    id: 'warrior',
+    name: '烈焰战士',
+    avatar: 'https://picsum.photos/seed/warrior/100/100', // TODO: 替换为你的头像
+    maxHp: 6, // 6颗心
+    skills: [
+      // 一技能：普通攻击
+      {
+        name: '重斩',
+        type: 'damage',
+        description: '对敌方造成1-2心伤害',
+        cooldown: 0,
+        targetType: 'enemy',
+        hitRate: 0.9,
+        effect: (target) => {
+          const damage = 1 + Math.random(); // 1-2随机伤害
+          return { damage, buff: null };
+        }
+      },
+      // 二技能：带Debuff的伤害
+      {
+        name: '烈火斩',
+        type: 'damage',
+        description: '对敌方造成2-3心伤害，30%概率附加2回合灼伤',
+        cooldown: 2,
+        targetType: 'enemy',
+        hitRate: 0.8,
+        effect: (target) => {
+          const damage = 2 + Math.random();
+          const buff = Math.random() < 0.3 ? { ...BUFF_LIST.BURN, duration: 2 } : null;
+          return { damage, buff };
+        }
+      },
+      // 三技能：大招
+      {
+        name: '烈焰风暴',
+        type: 'damage',
+        description: '对全体敌方造成2.5心伤害，必中',
+        cooldown: 5,
+        targetType: 'allEnemy',
+        hitRate: 1,
+        effect: (target) => ({ damage: 2.5, buff: null })
+      }
+    ]
+  },
+  {
+    id: 'mage',
+    name: '寒霜法师',
+    avatar: 'https://picsum.photos/seed/mage/100/100',
+    maxHp: 4.5, // 4颗半心
+    skills: [
+      {
+        name: '冰箭',
+        type: 'damage',
+        description: '对敌方造成0.5-1.5心伤害，20%概率附加1回合减速',
+        cooldown: 0,
+        targetType: 'enemy',
+        hitRate: 0.95,
+        effect: (target) => {
+          const damage = 0.5 + Math.random();
+          const buff = Math.random() < 0.2 ? { ...BUFF_LIST.SLOW, duration: 1 } : null;
+          return { damage, buff };
+        }
+      },
+      {
+        name: '冰盾',
+        type: 'buff',
+        description: '给己方角色添加2心护盾',
+        cooldown: 3,
+        targetType: 'ally',
+        hitRate: 1,
+        effect: (target) => ({
+          damage: 0,
+          buff: { ...BUFF_LIST.SHIELD, duration: 2, extraData: 2 }
+        })
+      },
+      {
+        name: '绝对零度',
+        type: 'damage',
+        description: '对全体敌方造成2心伤害，50%概率附加2回合寒霜',
+        cooldown: 4,
+        targetType: 'allEnemy',
+        hitRate: 1,
+        effect: (target) => {
+          const buff = Math.random() < 0.5 ? { ...BUFF_LIST.FROST, duration: 2 } : null;
+          return { damage: 2, buff };
+        }
+      }
+    ]
+  },
+  {
+    id: 'priest',
+    name: '光明牧师',
+    avatar: 'https://picsum.photos/seed/priest/100/100',
+    maxHp: 5,
+    skills: [
+      {
+        name: '圣光弹',
+        type: 'damage',
+        description: '对敌方造成0.5-1心伤害',
+        cooldown: 0,
+        targetType: 'enemy',
+        hitRate: 0.9,
+        effect: (target) => ({ damage: 0.5 + Math.random() * 0.5, buff: null })
+      },
+      {
+        name: '治愈术',
+        type: 'heal',
+        description: '为己方角色恢复1-3心血量',
+        cooldown: 2,
+        targetType: 'ally',
+        hitRate: 1,
+        effect: (target) => ({ damage: -(1 + Math.random() * 2), buff: null }) // 负伤害=回血
+      },
+      {
+        name: '神圣净化',
+        type: 'buff',
+        description: '净化己方所有负面buff，并添加1回合伤害翻倍',
+        cooldown: 4,
+        targetType: 'allAlly',
+        hitRate: 1,
+        effect: (target) => ({
+          damage: 0,
+          buff: [BUFF_LIST.PURIFY, { ...BUFF_LIST.DOUBLE_DAMAGE, duration: 1 }]
+        })
+      }
+    ]
+  }
+  // TODO: 在这里复制上面的模板添加新角色
+];
