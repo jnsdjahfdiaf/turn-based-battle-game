@@ -95,8 +95,3 @@ const BUFF_LIST = {
     description: '选择目标时会随机选择（包括友方）', duration: 2 
   }
 };
-
-    id: 'confusion', name: '混乱', type: 'debuff', 
-    description: '选择目标时会随机选择（包括友方）', duration: 2 
-  }
-};
