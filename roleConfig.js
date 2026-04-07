@@ -1,11 +1,6 @@
 import { BUFF_LIST } from './buffConfig.js';
 
 // 游戏全局配置
-export const GAME_CONFIG = {
-  MAX_ROUND: 20,
-  ROLES_PER_PLAYER: 3
-};
-
 // ==============================
 // 🎭 全角色配置表，所有技能标准化：
 // 一技能固定回能1点，二技能固定回能2点，所有技能添加编号前缀
@@ -319,3 +314,8 @@ export const ROLE_LIST = [
     ] 
   }
 ];
+// 只保留这一次声明，并且导出它，不要在文件其他位置重复声明
+export const GAME_CONFIG = {
+  MAX_ROUND: 20,
+  ROLES_PER_PLAYER: 3
+};
