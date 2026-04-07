@@ -92,6 +92,10 @@ function getPlayerTotalHp(playerId) {
 // 选角阶段逻辑
 // ==============================
 function initRoleSelect() {
+  // 增加容错判断，确保DOM元素存在
+  if (!$roleList) return console.error('未找到角色列表元素，请检查HTML结构');
+  if (!ROLE_LIST || ROLE_LIST.length === 0) return console.error('角色配置为空，请检查roleConfig.js');
+  
   $roleList.innerHTML = '';
   ROLE_LIST.forEach(role => {
     const card = document.createElement('div');
@@ -113,12 +117,15 @@ function initRoleSelect() {
   updateSelectedRolesTip();
   updateRoleCardStatus();
 }
+
+// 绑定切换玩家按钮事件
 $switchSelectPlayer.addEventListener('click', () => {
   gameState.currentOperatePlayer = gameState.currentOperatePlayer === 1 ? 2 : 1;
   $switchSelectPlayer.textContent = `当前配置：玩家${gameState.currentOperatePlayer}`;
   updateRoleCardStatus();
   $stageTip.textContent = `请玩家${gameState.currentOperatePlayer}选择参战角色`;
 });
+
 function handleRoleSelect(roleId) {
   const curPlayer = gameState.currentOperatePlayer;
   const selected = gameState.players[curPlayer].selectedRoles;
@@ -142,10 +149,12 @@ function handleRoleSelect(roleId) {
   const p2Done = gameState.players[2].selectedRoles.length === GAME_CONFIG.ROLES_PER_PLAYER;
   $confirmRolesBtn.disabled = !(p1Done && p2Done);
 }
+
 function updateSelectedRolesTip() {
   $player1Selected.textContent = `${gameState.players[1].selectedRoles.length}/${GAME_CONFIG.ROLES_PER_PLAYER}`;
   $player2Selected.textContent = `${gameState.players[2].selectedRoles.length}/${GAME_CONFIG.ROLES_PER_PLAYER}`;
 }
+
 function updateRoleCardStatus() {
   document.querySelectorAll('.role-card').forEach(card => {
     const roleId = card.dataset.roleId;
@@ -169,6 +178,7 @@ function updateRoleCardStatus() {
     }
   });
 }
+
 $confirmRolesBtn.addEventListener('click', () => {
   gameState.stage = 'positionSelect';
   $roleSelectSection.style.display = 'none';
@@ -653,6 +663,11 @@ $restartBtn.addEventListener('click', () => {
   $roundCounter.style.display = 'none';
   $roleSelectSection.style.display = 'block';
   $stageTip.textContent = '请玩家1选择参战角色';
+  initRoleSelect();
+});
+
+// 确保DOM加载完成后再初始化游戏
+window.addEventListener('DOMContentLoaded', () => {
   initRoleSelect();
 });
 
