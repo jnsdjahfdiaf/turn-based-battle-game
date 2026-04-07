@@ -32,25 +32,21 @@ const $switchSelectPlayer = $('switch-select-player');
 // 游戏全局状态
 // ==============================
 let gameState = {
-  stage: 'roleSelect', // 整体游戏阶段：roleSelect/positionSelect/battle
-  currentOperatePlayer: 1, // 当前正在操作的玩家
+  stage: 'roleSelect',
+  currentOperatePlayer: 1,
   round: 1,
   players: {
     1: { selectedRoles: [], positions: {}, battleRoles: [] },
     2: { selectedRoles: [], positions: {}, battleRoles: [] }
   },
-  firstPlayer: null, // 先后手，结算时先手先执行技能
-  // 战斗内状态
+  firstPlayer: null,
   battleStage: 'waitingAction',
-  pendingActions: { // 存储双方待结算的操作
-    1: null,
-    2: null
-  },
-  selectedRole: null, // 当前操作选中的角色
-  selectedSkill: null, // 当前选中的技能
+  pendingActions: { 1: null, 2: null },
+  selectedRole: null,
+  selectedSkill: null,
   selectedSkillIndex: null,
-  selectingTarget: false, // 是否正在选目标
-  lastAttacker: null // 用于反伤记录
+  selectingTarget: false,
+  lastAttacker: null
 };
 
 // ==============================
@@ -92,7 +88,6 @@ function getPlayerTotalHp(playerId) {
 // 选角阶段逻辑
 // ==============================
 function initRoleSelect() {
-  // 增加容错判断，确保DOM元素存在
   if (!$roleList) return console.error('未找到角色列表元素，请检查HTML结构');
   if (!ROLE_LIST || ROLE_LIST.length === 0) return console.error('角色配置为空，请检查roleConfig.js');
   
@@ -117,14 +112,6 @@ function initRoleSelect() {
   updateSelectedRolesTip();
   updateRoleCardStatus();
 }
-
-// 绑定切换玩家按钮事件
-$switchSelectPlayer.addEventListener('click', () => {
-  gameState.currentOperatePlayer = gameState.currentOperatePlayer === 1 ? 2 : 1;
-  $switchSelectPlayer.textContent = `当前配置：玩家${gameState.currentOperatePlayer}`;
-  updateRoleCardStatus();
-  $stageTip.textContent = `请玩家${gameState.currentOperatePlayer}选择参战角色`;
-});
 
 function handleRoleSelect(roleId) {
   const curPlayer = gameState.currentOperatePlayer;
@@ -179,15 +166,6 @@ function updateRoleCardStatus() {
   });
 }
 
-$confirmRolesBtn.addEventListener('click', () => {
-  gameState.stage = 'positionSelect';
-  $roleSelectSection.style.display = 'none';
-  $positionSelectSection.style.display = 'block';
-  gameState.currentOperatePlayer = 1;
-  $stageTip.textContent = '请玩家1安排角色站位';
-  initPositionSelect();
-});
-
 // ==============================
 // 站位选择阶段
 // ==============================
@@ -231,21 +209,6 @@ function handlePositionSelect(playerId, pos) {
   }
   renderPositionSlots(playerId);
 }
-$confirmPositionsBtn.addEventListener('click', () => {
-  initBattleRoles();
-  rollInitiative();
-  gameState.stage = 'battle';
-  gameState.battleStage = 'waitingAction';
-  // 修复先手行动BUG：初始当前操作玩家为先手玩家
-  gameState.currentOperatePlayer = gameState.firstPlayer;
-  $positionSelectSection.style.display = 'none';
-  $battleSection.style.display = 'block';
-  $roundCounter.style.display = 'block';
-  $roundCounter.textContent = `第 ${gameState.round} / ${GAME_CONFIG.MAX_ROUND} 回合`;
-  $stageTip.textContent = `战斗开始！先手为玩家${gameState.firstPlayer}，第1回合，请玩家${gameState.firstPlayer}选择要操作的角色`;
-  renderBattleField();
-  renderSkillList();
-});
 
 // ==============================
 // 战斗初始化
@@ -314,13 +277,11 @@ function renderPlayerBattleRoles(playerId, container) {
       }
     }
     if (!gameState.selectingTarget && playerId === gameState.currentOperatePlayer && role.currentHp>0) {
-      // 修复：传入事件参数e，替代全局event
       card.addEventListener('click', (e) => handleOperateRoleSelect(role, e));
     }
     container.appendChild(card);
   });
 }
-// 修复：添加事件参数e，不再使用全局event
 function handleOperateRoleSelect(role, e) {
   gameState.selectedRole = role;
   document.querySelectorAll('.battle-role-card').forEach(c => c.classList.remove('selected'));
@@ -386,7 +347,6 @@ function handleTargetSelect(target, targetPlayerId) {
   const caster = gameState.selectedRole;
   let targets = [];
 
-  // 整理目标列表（处理群体/混乱）
   if (skill.targetType === 'allEnemy') {
     targets = gameState.players[targetPlayerId === 1 ? 2 : 1].battleRoles.filter(r => r.currentHp>0);
   } else if (skill.targetType === 'allAlly') {
@@ -403,7 +363,6 @@ function handleTargetSelect(target, targetPlayerId) {
     }
   }
 
-  // 存储当前玩家的操作
   gameState.pendingActions[gameState.currentOperatePlayer] = {
     caster: caster,
     skill: skill,
@@ -411,33 +370,27 @@ function handleTargetSelect(target, targetPlayerId) {
     targets: targets
   };
 
-  // 重置选择状态
   gameState.selectingTarget = false;
   gameState.selectedRole = null;
   gameState.selectedSkill = null;
   gameState.selectedSkillIndex = null;
   $targetSelectTip.style.display = 'none';
 
-  // 判断是否双方都操作完成
   if (gameState.currentOperatePlayer === 1) {
-    // 切到玩家2操作
     gameState.currentOperatePlayer = 2;
     $stageTip.textContent = `第${gameState.round}回合，请玩家2选择要操作的角色`;
     renderBattleField();
     renderSkillList();
   } else {
-    // 双方都操作完成，进入结算
     settleRound();
   }
 }
 
-// 执行单个操作的技能效果
 function executeAction(action) {
   const { caster, skill, skillIndex, targets } = action;
   gameState.lastAttacker = caster;
 
   targets.forEach(t => {
-    // 闪避处理
     if (t.buffs.some(b => b.id === 'dodge') && skill.targetType !== 'allEnemy' && skill.targetType !== 'allAlly') {
       alert(`${t.name} 闪避了${caster.name}的技能！`);
       t.buffs = t.buffs.filter(b => b.id !== 'dodge');
@@ -447,30 +400,23 @@ function executeAction(action) {
     const effect = skill.effect(t, caster);
     let damage = effect.damage || 0;
 
-    // 伤害计算
     if (damage > 0) {
       damage *= caster.damageDealtMultiplier;
-      // 暴击增幅处理
       if (caster.buffs.some(b => b.id === 'critBoost')) {
         damage *= 2;
         caster.buffs = caster.buffs.filter(b => b.id !== 'critBoost');
       }
-      // 致命标记处理
       if (t.buffs.some(b => b.id === 'mark')) {
         damage *= 2;
-        t.buffs = t.buffs.filter(b => b.id !== 'mark');
+        t.buffs = t.buffs.filter(b => b.id === 'mark');
       }
-      // 灼烧额外伤害
       damage += (caster.extraBurnDamage || 0);
-      // 护盾吸收
       if (t.shield > 0) {
         const absorb = Math.min(t.shield, damage);
         t.shield -= absorb;
         damage -= absorb;
       }
-      // 伤害减免
       damage *= t.damageTakenMultiplier;
-      // 反伤处理
       const reflectBuff = t.buffs.find(b => b.id === 'reflect');
       if (reflectBuff && reflectBuff.onHit) {
         const reflectResult = reflectBuff.onHit(t, damage);
@@ -479,20 +425,17 @@ function executeAction(action) {
           alert(`${gameState.lastAttacker.name} 受到了 ${reflectResult.damage.toFixed(1)} 点反伤！`);
         }
       }
-      // 最终扣血
       t.currentHp = Math.max(0, t.currentHp - damage);
       if (damage > 0) {
         alert(`${caster.name}对${t.name}造成${damage.toFixed(1)}点伤害！`);
       }
     } else if (damage < 0) {
-      // 治疗计算
       let heal = -damage;
       heal *= t.healTakenMultiplier;
       t.currentHp = Math.min(t.maxHp, t.currentHp + heal);
       alert(`${caster.name}为${t.name}恢复${heal.toFixed(1)}点血量！`);
     }
 
-    // 添加Buff处理
     if (effect.buff) {
       const buffs = Array.isArray(effect.buff) ? effect.buff : [effect.buff];
       buffs.forEach(buffTemp => {
@@ -514,7 +457,6 @@ function executeAction(action) {
     }
   });
 
-  // 能量和冷却处理
   if (!skill.isUltimate && skill.energyGain) {
     caster.currentEnergy = Math.min(caster.maxEnergy, (caster.currentEnergy || 0) + skill.energyGain);
   }
@@ -524,58 +466,45 @@ function executeAction(action) {
   caster.skillCooldowns[skillIndex] = skill.cooldown;
 }
 
-// 回合结算
 function settleRound() {
-  // 按先手顺序结算技能
   const actionOrder = gameState.firstPlayer === 1 ? [1, 2] : [2, 1];
   actionOrder.forEach(playerId => {
     const action = gameState.pendingActions[playerId];
     if (action) executeAction(action);
   });
 
-  // 处理回合结束：Buff递减、冷却递减
   processRoundEnd();
 
-  // 检查游戏结束
   if (checkGameEnd()) return;
 
-  // 超过最大回合限制
   if (gameState.round > GAME_CONFIG.MAX_ROUND) {
     handleRoundLimitEnd();
     return;
   }
 
-  // 进入下一个回合
   gameState.round++;
   $roundCounter.textContent = `第 ${gameState.round} / ${GAME_CONFIG.MAX_ROUND} 回合`;
   gameState.pendingActions = {1: null, 2: null};
-  // 修复先手行动BUG：下回合依旧先手玩家先操作
   gameState.currentOperatePlayer = gameState.firstPlayer;
   $stageTip.textContent = `第${gameState.round}回合，请玩家${gameState.currentOperatePlayer}选择要操作的角色`;
   renderBattleField();
   renderSkillList();
 }
 
-// 处理回合结束的Buff和冷却
 function processRoundEnd() {
   [1, 2].forEach(playerId => {
     gameState.players[playerId].battleRoles.forEach(role => {
-      // 先触发所有Buff的回合结束效果
       role.buffs.forEach(buff => {
         if (buff.onTurnEnd) buff.onTurnEnd(role);
       });
-      // 减少持续时间，移除过期Buff
       role.buffs.forEach(buff => buff.duration--);
       role.buffs = role.buffs.filter(buff => buff.duration > 0);
-      // 重置每回合属性乘数
       role.damageTakenMultiplier = 1;
       role.damageDealtMultiplier = 1;
       role.healTakenMultiplier = 1;
       role.lifestealMultiplier = 1;
       role.extraBurnDamage = 0;
-      // 冷却减少1
       role.skillCooldowns = role.skillCooldowns.map(cd => Math.max(0, cd - 1));
-      // 重新应用当前Buff的效果
       role.buffs.forEach(buff => {
         if (buff.effect) buff.effect(role);
       });
@@ -587,7 +516,6 @@ function processRoundEnd() {
 // 胜负判定
 // ==============================
 function checkGameEnd() {
-  // 处理复活
   [1,2].forEach(playerId => {
     gameState.players[playerId].battleRoles.forEach(role => {
       if (role.currentHp <= 0) {
@@ -596,7 +524,6 @@ function checkGameEnd() {
           const revived = lastStand.onDeath(role);
           if (revived) {
             alert(`${role.name} 触发了「回光返照」复活了！`);
-            // 复活后重新应用Buff效果
             role.buffs.forEach(buff => {
               if (buff.effect) buff.effect(role);
             });
@@ -639,37 +566,71 @@ function showResult(title, desc) {
   $resultModal.style.display = 'flex';
 }
 
-// 重启游戏
-$restartBtn.addEventListener('click', () => {
-  gameState = {
-    stage: 'roleSelect',
-    currentOperatePlayer: 1,
-    round: 1,
-    players: {
-      1: { selectedRoles: [], positions: {}, battleRoles: [] },
-      2: { selectedRoles: [], positions: {}, battleRoles: [] }
-    },
-    firstPlayer: null,
-    battleStage: 'waitingAction',
-    pendingActions: { 1: null, 2: null },
-    selectedRole: null,
-    selectedSkill: null,
-    selectedSkillIndex: null,
-    selectingTarget: false,
-    lastAttacker: null
-  };
-  $resultModal.style.display = 'none';
-  $battleSection.style.display = 'none';
-  $roundCounter.style.display = 'none';
-  $roleSelectSection.style.display = 'block';
-  $stageTip.textContent = '请玩家1选择参战角色';
-  initRoleSelect();
-});
-
-// 确保DOM加载完成后再初始化游戏
+// ==============================
+// 事件绑定（关键修复：移到DOM加载完成后）
+// ==============================
 window.addEventListener('DOMContentLoaded', () => {
+  // 切换玩家按钮
+  $switchSelectPlayer.addEventListener('click', () => {
+    gameState.currentOperatePlayer = gameState.currentOperatePlayer === 1 ? 2 : 1;
+    $switchSelectPlayer.textContent = `当前配置：玩家${gameState.currentOperatePlayer}`;
+    updateRoleCardStatus();
+    $stageTip.textContent = `请玩家${gameState.currentOperatePlayer}选择参战角色`;
+  });
+
+  // 确认选角
+  $confirmRolesBtn.addEventListener('click', () => {
+    gameState.stage = 'positionSelect';
+    $roleSelectSection.style.display = 'none';
+    $positionSelectSection.style.display = 'block';
+    gameState.currentOperatePlayer = 1;
+    $stageTip.textContent = '请玩家1安排角色站位';
+    initPositionSelect();
+  });
+
+  // 确认站位
+  $confirmPositionsBtn.addEventListener('click', () => {
+    initBattleRoles();
+    rollInitiative();
+    gameState.stage = 'battle';
+    gameState.battleStage = 'waitingAction';
+    gameState.currentOperatePlayer = gameState.firstPlayer;
+    $positionSelectSection.style.display = 'none';
+    $battleSection.style.display = 'block';
+    $roundCounter.style.display = 'block';
+    $roundCounter.textContent = `第 ${gameState.round} / ${GAME_CONFIG.MAX_ROUND} 回合`;
+    $stageTip.textContent = `战斗开始！先手为玩家${gameState.firstPlayer}，第1回合，请玩家${gameState.firstPlayer}选择要操作的角色`;
+    renderBattleField();
+    renderSkillList();
+  });
+
+  // 重启游戏
+  $restartBtn.addEventListener('click', () => {
+    gameState = {
+      stage: 'roleSelect',
+      currentOperatePlayer: 1,
+      round: 1,
+      players: {
+        1: { selectedRoles: [], positions: {}, battleRoles: [] },
+        2: { selectedRoles: [], positions: {}, battleRoles: [] }
+      },
+      firstPlayer: null,
+      battleStage: 'waitingAction',
+      pendingActions: { 1: null, 2: null },
+      selectedRole: null,
+      selectedSkill: null,
+      selectedSkillIndex: null,
+      selectingTarget: false,
+      lastAttacker: null
+    };
+    $resultModal.style.display = 'none';
+    $battleSection.style.display = 'none';
+    $roundCounter.style.display = 'none';
+    $roleSelectSection.style.display = 'block';
+    $stageTip.textContent = '请玩家1选择参战角色';
+    initRoleSelect();
+  });
+
+  // 初始化游戏
   initRoleSelect();
 });
-
-// 初始化游戏
-initRoleSelect();
