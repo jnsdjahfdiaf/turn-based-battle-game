@@ -634,7 +634,3 @@ window.addEventListener('DOMContentLoaded', () => {
   // 初始化游戏
   initRoleSelect();
 });
-
-  // 初始化游戏
-  initRoleSelect();
-});
