@@ -492,27 +492,3 @@ export const GAME_CONFIG = {
   MAX_ROUND: 20,
   ROLES_PER_PLAYER: 3
 };
-```
-
-现在，让我们同时修复`main.js`中的`renderHp`函数，添加安全检查以防止报错：
-
-```javascript
-// main.js - 修复 renderHp 函数
-function renderHp(hp, maxHp) {
-  // 添加安全检查
-  hp = Math.max(0, Number(hp) || 0);
-  maxHp = Math.max(1, Number(maxHp) || 1);
-  
-  let html = '';
-  const full = Math.floor(hp);
-  const half = hp % 1 >= 0.5;
-  const empty = Math.floor(maxHp) - full - (half ? 1 : 0);
-  
-  // 防止 empty 为负数
-  const safeEmpty = Math.max(0, empty);
-  
-  html += '<div class="heart"></div>'.repeat(full);
-  if (half) html += '<div class="heart half"></div>';
-  html += '<div class="heart empty"></div>'.repeat(safeEmpty);
-  return html;
-}
