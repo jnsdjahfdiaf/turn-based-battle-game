@@ -1,11 +1,13 @@
-import { BUFF_LIST } from './buffConfig.js';// 游戏全局配置
+import { BUFF_LIST } from './buffConfig.js';
+
+// 游戏全局配置
 // ==============================
 // 🎭 全角色配置表，所有技能标准化：
 // 一技能固定回能1点，二技能固定回能2点，所有技能添加编号前缀
 // 所有伤害/治疗统一为0.5倍数
 // ==============================
 export const ROLE_LIST = [
-  // ========== 原有17个角色 ==========
+  // ========== 原有17个角色保留 ==========
   { 
     id: 'warrior', name: '狂战士', 
     avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=warrior', 
@@ -124,8 +126,8 @@ export const ROLE_LIST = [
           if (Math.random() > 0.5) {
             return { damage: 3 + Math.floor(Math.random() * 3) };
           } else {
-            caster?.battleRoles?.forEach(r => {
-              if (r && r.currentHp > 0) r.currentHp = Math.min(r.maxHp, r.currentHp + 2 + Math.floor(Math.random() * 2));
+            gameState.players[gameState.currentOperatePlayer].battleRoles.forEach(r => {
+              if (r.currentHp > 0) r.currentHp = Math.min(r.maxHp, r.currentHp + 2 + Math.floor(Math.random() * 2));
             });
             return { damage: 0 };
           }
@@ -202,7 +204,7 @@ export const ROLE_LIST = [
       { name: '暗无天日', description: '对所有敌人造成2.5点伤害，有标记的额外再造成2.5点', cooldown: 0, energyCost: 3, targetType: 'allEnemy', isUltimate: true,
         effect: (t, c) => {
           let dmg = 2.5;
-          if (t.buffs && t.buffs.some(b => b.id === 'mark')) {
+          if (t.buffs.some(b => b.id === 'mark')) {
             dmg += 2.5;
             t.buffs = t.buffs.filter(b => b.id !== 'mark');
           }
@@ -218,11 +220,11 @@ export const ROLE_LIST = [
       { name: '荆棘缠绕', description: '造成1.2点伤害，附加「攻击弱化」', cooldown: 0, energyGain: 1, targetType: 'enemy',
         effect: (t, c) => { return { damage: 1.2, buff: BUFF_LIST.attackDown }; } },
       { name: '自然治愈', description: '为一名友方恢复2点血量，清除所有Debuff', cooldown: 2, energyGain: 2, targetType: 'ally',
-        effect: (t, c) => { if(t.buffs) t.buffs = t.buffs.filter(b => b.type === 'buff'); return { damage: -2, buff: BUFF_LIST.cleanse }; } },
+        effect: (t, c) => { t.buffs = t.buffs.filter(b => b.type === 'buff'); return { damage: -2, buff: BUFF_LIST.cleanse }; } },
       { name: '森林之怒', description: '对所有敌人造成2点伤害，为所有友方恢复1点血量', cooldown: 0, energyCost: 3, targetType: 'allEnemy', isUltimate: true,
         effect: (t, c) => {
-          c?.battleRoles?.forEach(r => {
-            if (r && r.currentHp > 0) r.currentHp = Math.min(r.maxHp, r.currentHp + 1);
+          gameState.players[gameState.currentOperatePlayer].battleRoles.forEach(r => {
+            if (r.currentHp > 0) r.currentHp = Math.min(r.maxHp, r.currentHp + 1);
           });
           return { damage: 2 };
         } }
@@ -258,7 +260,7 @@ export const ROLE_LIST = [
       { name: '剑豪之怒', description: '造成6点伤害，有标记的额外再造成3点，清除标记', cooldown: 0, energyCost: 3, targetType: 'enemy', isUltimate: true,
         effect: (t, c) => {
           let dmg = 6;
-          if (t.buffs && t.buffs.some(b => b.id === 'mark')) {
+          if (t.buffs.some(b => b.id === 'mark')) {
             dmg += 3;
             t.buffs = t.buffs.filter(b => b.id !== 'mark');
           }
@@ -291,9 +293,9 @@ export const ROLE_LIST = [
         effect: (target, caster) => { return { damage: 1.5, buff: BUFF_LIST.poison }; } },
       { name: '三技能·群体治愈', description: '为所有友方恢复2.0点血量，清除所有Debuff', cooldown: 0, energyCost: 3, targetType: 'allAlly', isUltimate: true,
         effect: (target, caster) => { 
-          caster?.battleRoles?.forEach(role => {
-            if (role && role.currentHp > 0) role.currentHp = Math.min(role.maxHp, role.currentHp + 2.0);
-            if(role && role.buffs) role.buffs = role.buffs.filter(b => b.type === 'buff');
+          caster.battleRoles.forEach(role => {
+            if (role.currentHp > 0) role.currentHp = Math.min(role.maxHp, role.currentHp + 2.0);
+            role.buffs = role.buffs.filter(b => b.type === 'buff');
           });
           return { damage: 0, buff: BUFF_LIST.cleanse };
         } }
@@ -320,11 +322,11 @@ export const ROLE_LIST = [
       { name: '一技能·鞭挞', description: '对敌方单体造成1.5点伤害，回复1点充能', cooldown: 0, energyGain: 1, targetType: 'enemy',
         effect: (target, caster) => { return { damage: 1.5 }; } },
       { name: '二技能·野性鼓舞', description: '为一名友方附加「攻击强化」和1.5点护盾，回复2点充能', cooldown: 2, energyGain: 2, targetType: 'ally',
-        effect: (target, caster) => { if(target) target.shield +=1.5; return { buff: BUFF_LIST.attackUp }; } },
+        effect: (target, caster) => { target.shield +=1.5; return { buff: BUFF_LIST.attackUp }; } },
       { name: '三技能·兽群降临', description: '为所有友方附加「攻击强化」，并提供2.0点护盾', cooldown: 0, energyCost: 3, targetType: 'allAlly', isUltimate: true,
         effect: (target, caster) => { 
-          caster?.battleRoles?.forEach(role => {
-            if (role && role.currentHp > 0) {
+          caster.battleRoles.forEach(role => {
+            if (role.currentHp > 0) {
               role.shield +=2.0;
               role.buffs.push({...BUFF_LIST.attackUp, duration:2});
             }
@@ -343,7 +345,7 @@ export const ROLE_LIST = [
       { name: '二技能·齐射', description: '对所有敌方造成1.5点炮击伤害，回复2点充能', cooldown: 2, energyGain: 2, targetType: 'allEnemy',
         effect: (target, caster) => { return { damage: 1.5 }; } },
       { name: '三技能·破甲炮击', description: '对所有敌方造成3.0点炮击伤害，附加「破甲」持续2回合', cooldown: 0, energyCost: 3, targetType: 'allEnemy', isUltimate: true,
-        effect: (target, caster) => { return { damage: 3.0, buff: {...BUFF_LIST.damageReduction, name:'破甲', effect:(t)=>{if(t) t.damageTakenMultiplier *=1.5}, duration:2} }; } }
+        effect: (target, caster) => { return { damage: 3.0, buff: {...BUFF_LIST.damageReduction, name:'破甲', effect:(t)=>{t.damageTakenMultiplier *=1.5}, duration:2} }; } }
     ] 
   },
   { 
@@ -373,11 +375,9 @@ export const ROLE_LIST = [
         effect: (target, caster) => { return { buff: BUFF_LIST.damageReduction }; } },
       { name: '三技能·森林恩赐', description: '为所有友方恢复2.0点血量，附加「伤害减免」持续2回合', cooldown: 0, energyCost: 3, targetType: 'allAlly', isUltimate: true,
         effect: (target, caster) => { 
-          caster?.battleRoles?.forEach(role => {
-            if (role && role.currentHp > 0) {
-              role.currentHp = Math.min(role.maxHp, role.currentHp + 2.0);
-              role.buffs.push({...BUFF_LIST.damageReduction, duration:2});
-            }
+          caster.battleRoles.forEach(role => {
+            if (role.currentHp > 0) role.currentHp = Math.min(role.maxHp, role.currentHp + 2.0);
+            role.buffs.push({...BUFF_LIST.damageReduction, duration:2});
           });
           return { damage:0 };
         } }
@@ -405,13 +405,13 @@ export const ROLE_LIST = [
         effect: (target, caster) => { return { damage: 1.5 }; } },
       { name: '二技能·生命虹吸', description: '为一名友方恢复2.0点血量，偷取目标0.5点充能，回复2点充能', cooldown: 2, energyGain: 2, targetType: 'ally',
         effect: (target, caster) => { 
-          if(caster) caster.currentEnergy = Math.min(caster.maxEnergy, (caster.currentEnergy ||0)+0.5);
+          caster.currentEnergy = Math.min(caster.maxEnergy, (caster.currentEnergy ||0)+0.5);
           return { damage: -2.0 };
         } },
       { name: '三技能·暗影潮汐', description: '对所有敌方造成2.5点暗属性伤害，为所有友方恢复1.5点血量', cooldown: 0, energyCost: 3, targetType: 'allEnemy', isUltimate: true,
         effect: (target, caster) => { 
-          caster?.battleRoles?.forEach(role => {
-            if (role && role.currentHp >0) role.currentHp = Math.min(role.maxHp, role.currentHp +1.5);
+          caster.battleRoles.forEach(role => {
+            if (role.currentHp >0) role.currentHp = Math.min(role.maxHp, role.currentHp +1.5);
           });
           return { damage:2.5 };
         } }
@@ -424,15 +424,20 @@ export const ROLE_LIST = [
     skills: [
       { name: '一技能·冲拳', description: '对敌方单体造成1.5点伤害，回复1点充能，偷取目标0.5点充能', cooldown: 0, energyGain: 1, targetType: 'enemy',
         effect: (target, caster) => { 
-          const stolen = Math.min(target?.currentEnergy ||0, 0.5);
-          if(target) target.currentEnergy = Math.max(0, (target.currentEnergy ||0)-stolen);
-          if(caster) caster.currentEnergy = Math.min(caster.maxEnergy, (caster.currentEnergy ||0)+stolen);
+          const stolen = Math.min(target.currentEnergy ||0, 0.5);
+          target.currentEnergy = Math.max(0, (target.currentEnergy ||0)-stolen);
+          caster.currentEnergy = Math.min(caster.maxEnergy, (caster.currentEnergy ||0)+stolen);
           return { damage:1.5 };
         } },
       { name: '二技能·连环踢', description: '对所有敌方造成1.0点伤害，回复2点充能', cooldown: 2, energyGain: 2, targetType: 'allEnemy',
         effect: (target, caster) => { return { damage:1.0 }; } },
       { name: '三技能·爆气一击', description: '对所有敌方造成3.0点伤害，偷取每个目标0.5点充能', cooldown: 0, energyCost: 3, targetType: 'allEnemy', isUltimate: true,
         effect: (target, caster) => { 
+          caster.battleRoles.forEach(role => {
+            const stolen = Math.min(target.currentEnergy ||0, 0.5);
+            target.currentEnergy = Math.max(0, (target.currentEnergy ||0)-stolen);
+            caster.currentEnergy = Math.min(caster.maxEnergy, (caster.currentEnergy ||0)+stolen);
+          });
           return { damage:3.0 };
         } }
     ] 
@@ -444,16 +449,16 @@ export const ROLE_LIST = [
     skills: [
       { name: '一技能·鼓舞', description: '为一名友方回复1点充能，自身回复1点充能', cooldown: 0, energyGain: 1, targetType: 'ally',
         effect: (target, caster) => { 
-          if(target) target.currentEnergy = Math.min(target.maxEnergy, (target.currentEnergy ||0)+1);
-          if(caster) caster.currentEnergy = Math.min(caster.maxEnergy, (caster.currentEnergy ||0)+1);
+          target.currentEnergy = Math.min(target.maxEnergy, (target.currentEnergy ||0)+1);
+          caster.currentEnergy = Math.min(caster.maxEnergy, (caster.currentEnergy ||0)+1);
           return { damage:0 };
         } },
       { name: '二技能·嘲讽歌舞', description: '为所有敌方附加「嘲讽」持续2回合，回复2点充能', cooldown: 3, energyGain: 2, targetType: 'allEnemy',
         effect: (target, caster) => { return { buff: BUFF_LIST.taunt }; } },
       { name: '三技能·战歌', description: '为所有友方附加「攻击强化」和「闪避」持续2回合', cooldown: 0, energyCost: 3, targetType: 'allAlly', isUltimate: true,
         effect: (target, caster) => { 
-          caster?.battleRoles?.forEach(role => {
-            if (role && role.currentHp >0) {
+          caster.battleRoles.forEach(role => {
+            if (role.currentHp >0) {
               role.buffs.push({...BUFF_LIST.attackUp, duration:2});
               role.buffs.push({...BUFF_LIST.dodge, duration:2});
             }
@@ -470,18 +475,18 @@ export const ROLE_LIST = [
       { name: '一技能·血契', description: '对敌方单体造成2.0点伤害，恢复等同于伤害的血量，回复1点充能', cooldown: 0, energyGain: 1, targetType: 'enemy',
         effect: (target, caster) => { 
           const dmg =2.0;
-          if(caster) caster.currentHp = Math.min(caster.maxHp, caster.currentHp +dmg);
+          caster.currentHp = Math.min(caster.maxHp, caster.currentHp +dmg);
           return { damage:dmg };
         } },
       { name: '二技能·血之漩涡', description: '对所有敌方造成1.5点伤害，恢复总伤害50%的血量，回复2点充能', cooldown: 2, energyGain: 2, targetType: 'allEnemy',
         effect: (target, caster) => { 
           const dmg =1.5;
-          if(caster) caster.currentHp = Math.min(caster.maxHp, caster.currentHp + (dmg *0.5));
+          caster.currentHp = Math.min(caster.maxHp, caster.currentHp + (dmg *0.5));
           return { damage:dmg };
         } },
       { name: '三技能·血祭', description: '自身损失3.0点血量，对所有敌方造成5.0点伤害', cooldown: 0, energyCost: 4, targetType: 'allEnemy', isUltimate: true,
         effect: (target, caster) => { 
-          if(caster) caster.currentHp = Math.max(0, caster.currentHp -3.0);
+          caster.currentHp = Math.max(0, caster.currentHp -3.0);
           return { damage:5.0 };
         } }
     ] 
